@@ -100,7 +100,7 @@ var lastTouchedInputCellRow = -1;
 var lastInput = -1;
 
 //プレイ中（操作可能）かどうか
-var isPlaying = false;
+var isPlaying = true;
 
 var countdownNumber = 3;
 var countdownNumberFontSize = Math.floor(mainScreenHeight / 3);
@@ -228,23 +228,23 @@ window.onload = function(){
 		}
 	}
 
-	//カウントダウンを表示
-	$("#gameScreen").append('<div id="countdownWhite"></div>');
-	$("#countdownWhite")
-	.css("position", "relative")
-	.css("z-index", "1")
-	.css("height", screenHeight + "px")
-	.css("width", screenWidth + "px")
-	.css("background-color", "rgba(255, 255, 255, 0.8)");
-
-	$("#countdownWhite").append('<div id="countdown"></div>');
-	$("#countdown")
-	.css("font-size", countdownNumberFontSize + "px")
-	.css("line-height", mainScreenHeight + "px")
-	.css("height", mainScreenHeight + "px")
-	.css("width", screenWidth + "px")
-	.html(countdownNumber);
-	countdownTimerId = setInterval("countdown_tick()", 1000);
+	// //カウントダウンを表示
+	// $("#gameScreen").append('<div id="countdownWhite"></div>');
+	// $("#countdownWhite")
+	// .css("position", "relative")
+	// .css("z-index", "1")
+	// .css("height", screenHeight + "px")
+	// .css("width", screenWidth + "px")
+	// .css("background-color", "rgba(255, 255, 255, 0.8)");
+// 
+	// $("#countdownWhite").append('<div id="countdown"></div>');
+	// $("#countdown")
+	// .css("font-size", countdownNumberFontSize + "px")
+	// .css("line-height", mainScreenHeight + "px")
+	// .css("height", mainScreenHeight + "px")
+	// .css("width", screenWidth + "px")
+	// .html(countdownNumber);
+	// countdownTimerId = setInterval("countdown_tick()", 1000);
 
 	//ボトムエリア
 	$("#gameScreen").append('<div id="bottomArea"></div>');
