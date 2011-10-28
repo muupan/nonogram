@@ -12,26 +12,43 @@
 		<!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<script type="text/javascript"><!--
+			var upNumber = [
+				[0, 0, 0, 1],
+				[0, 0, 0, 1],
+				[0, 0, 0, 1],
+				[0, 0, 0, 1],
+				[0, 0, 0, 1],
+				[0, 0, 0, 1],
+				[0, 0, 0, 1]
+			];
+		
+			var leftNumber = [
+				[0, 0, 0, 0, 0, 0, 0],
+				[0, 0, 0, 0, 0, 0, 0],
+				[0, 0, 0, 0, 0, 0, 0],
+				[1, 1, 1, 1, 1, 1, 1]
+			];
+		
+			var userItems = {};
+			userItems["1"] = 4;
+			userItems["2"] = 5;
+			userItems["3"] = 6;
+		
+			var itemName = {};
+			itemName["1"] = "スグクリア";
+			itemName["2"] = "アイテム2";
+			itemName["3"] = "アイテム3";
+		
+			var inputColCount = 7;
+			var inputRowCount = 7;
+		// --></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+		<script type="text/javascript" src="nonogram.js" charset="utf-8"></script>
 	</head>
 	<body>
 		<div>
-			<header>
-				<h1>index</h1>
-			</header>
-			<nav>
-				<p>
-					<a href="/">Home</a>
-				</p>
-				<p>
-					<a href="/contact">Contact</a>
-				</p>
-			</nav>
-			<div></div>
-			<footer>
-				<p>
-					&copy; Copyright  by Owner
-				</p>
-			</footer>
+			<div id="gameScreen"></div>
 		</div>
 	</body>
 </html>

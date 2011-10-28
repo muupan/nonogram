@@ -2,19 +2,9 @@
  * @author Owner
  */
 
-//var screenWidth = 320;
-var screenWidth = window.innerWidth;
-
-var Cell = function() {
-	var width;
-	var height;
-}
-
-var upNumberColCount = inputColCount;
-var upNumberRowCount = Math.ceil(inputRowCount / 2);
-var leftNumberColCount = Math.ceil(inputColCount / 2);
-var leftNumberRowCount = inputRowCount;
-
+//以下設定項目
+var screenWidth = 320;
+var usesMouseEvents = true;
 var marginLeft = 10;
 var marginRight = 10;
 var marginTop = 10;
@@ -23,6 +13,32 @@ var marginLeftOfInputArea = 5;
 var marginTopOfInputArea = 5;
 var marginBetweenInputAreaAndBottomArea = 10;
 var marginBetweenBottomAreaAndButtonArea = 10;
+
+//以下非設定項目
+var touchstart;
+var touchmove;
+var touchend;
+if (usesMouseEvents) {
+	touchstart = "mousedown";
+	touchmove = "mousemove";
+	touchend = "mouseup";
+} else {
+	touchstart = "touchstart";
+	touchmove = "touchmove";
+	touchend = "touchend";
+}
+
+var mouseIsDown = false;
+
+var Point = function(x, y) {
+	this.x = x;
+	this.y = y;
+};
+
+var upNumberColCount = inputColCount;
+var upNumberRowCount = Math.ceil(inputRowCount / 2);
+var leftNumberColCount = Math.ceil(inputColCount / 2);
+var leftNumberRowCount = inputRowCount;
 
 var inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * (2 / 3)));
 var inputCellHeight = inputCellWidth;
@@ -112,16 +128,6 @@ window.onload = function(){
 	.css("height", screenHeight + "px")
 	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
 
-	//ロゴを表示
-	$("#gameScreen").append('<div id="logo"></div>');
-	$("#logo")
-	.css("position", "absolute")
-	.css("left", logoAreaStartX + "px")
-	.css("top", logoAreaStartY+ "px")
-	.css("width", logoAreaWidth *+ "px")
-	.css("height", logoAreaHeight + "px")
-	.html('<img src="/img/nonogram_logo.gif" alt="みんなdeロジック" width=' + logoAreaWidth + ' height=' + logoAreaHeight + ' />');
-
 	//上の数字セル
 	for (var col = 0; col < upNumberColCount; col++) {
 		for (var row = 0; row < upNumberRowCount; row++) {
@@ -184,6 +190,7 @@ window.onload = function(){
 			.html(content);
 		}
 	}
+	
 	//入力エリア
 	$("#gameScreen").append('<div id="inputArea"></div>');
 	$("#inputArea")
@@ -191,13 +198,8 @@ window.onload = function(){
 	.css("left", inputAreaStartX + "px")
 	.css("top", inputAreaStartY + "px")
 	.css("width", inputAreaWidth + "px")
-	.bind("touchmove", inputArea_touchmove);
-
-	if (isIos3) { //iOS3の場合は不具合回避のためinputAreaの高さを広げる（とりあえず二倍）
-		$("#inputArea").css("height", inputAreaHeight * 2 + "px");
-	} else {
-		$("#inputArea").css("height", inputAreaHeight + "px");
-	}
+	.bind(touchmove, inputArea_touchmove)
+	.bind(touchend, inputArea_touchend);
 
 	//入力セル
 	for (var col = 0; col < inputColCount; col++) {
@@ -222,8 +224,7 @@ window.onload = function(){
 			.css("line-height", inputCellHeight + "px")
 			.css("text-align", "center")
 			.css("border", "1px solid black")
-			.bind("touchstart", {"col": col, "row": row}, inputCell_touchstart); //端末ではこっち
-			//.bind("click", {"col": col, "row": row}, inputCell_touchstart); //pcでデバッグするときはこっち
+			.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
 		}
 	}
 
@@ -295,9 +296,10 @@ window.onload = function(){
 // 入力セルがタッチされたとき
 function inputCell_touchstart(event) {
 	if (isPlaying) {
-		if (!isIos41) {
-			event.preventDefault();
+		if (usesMouseEvents) {
+			mouseIsDown = true;
 		}
+		event.preventDefault();
 		var col = event.data.col;
 		var row = event.data.row;
 		switch (input[col][row]) {
@@ -316,13 +318,12 @@ function inputCell_touchstart(event) {
 
 // タッチ後に動かしたとき
 function inputArea_touchmove(event) {
-	if (isPlaying) {
+	if (isPlaying && (!usesMouseEvents || mouseIsDown)) {
 		//黒と×は、白い場所にのみ連続して入力できる。白は連続して入力できない。
-		if (!isIos41) {
-			event.preventDefault();
-		}
-		var col = Math.floor((event.originalEvent.touches[0].pageX - inputAreaStartX) / inputCellWidth);
-		var row = Math.floor((event.originalEvent.touches[0].pageY - inputAreaStartY) / inputCellHeight);
+		event.preventDefault();
+		var touchPoint = getTouchPoint(event);
+		var col = Math.floor((touchPoint.x - inputAreaStartX) / inputCellWidth);
+		var row = Math.floor((touchPoint.y - inputAreaStartY) / inputCellHeight);
 		if (col >= 0 && col < inputColCount && row >= 0 && row < inputRowCount) {
 			if (col != lastTouchedInputCellCol || row != lastTouchedInputCellRow) {
 				if (input[col][row] == 0) {
@@ -334,6 +335,20 @@ function inputArea_touchmove(event) {
 				}
 			}
 		}
+	}
+}
+
+function inputArea_touchend(event) {
+	if (usesMouseEvents) {
+		mouseIsDown = false;
+	}
+}
+
+function getTouchPoint(event) {
+	if (usesMouseEvents) {
+		return new Point(event.originalEvent.pageX, event.originalEvent.pageY);
+	} else {
+		return new Point(event.originalEvent.touches[0].pageX, event.originalEvent.touches[0].pageY);
 	}
 }
 
@@ -591,18 +606,18 @@ function clear() {
 //アイテムボタンのクリックイベント
 function itemButton_click(event) {
 	var itemId = event.data.itemId;
-	jConfirm(itemName[itemId] + "を使用してもよろしいですか？", "確認", function (r) {
-		if (r == true) {
-			//「はい」をクリック
-			userItems[itemId]--;
-			usedItems[itemId]++;
-			updateItemButton(itemId);
-			//スグクリアの場合はクリア
-			if (itemId == 1 || itemId == "1") {
-				clear();
-			}
-		}
-	});
+	// jConfirm(itemName[itemId] + "を使用してもよろしいですか？", "確認", function (r) {
+		// if (r == true) {
+			// //「はい」をクリック
+			// userItems[itemId]--;
+			// usedItems[itemId]++;
+			// updateItemButton(itemId);
+			// //スグクリアの場合はクリア
+			// if (itemId == 1 || itemId == "1") {
+				// clear();
+			// }
+		// }
+	// });
 }
 
 //アイテムボタンの表示を更新する
@@ -635,11 +650,11 @@ function hasItem() {
 
 //ギブアップボタンのクリックイベント
 function giveupButton_click(event) {
-	jConfirm("ギブアップしてもよろしいですか？", "確認", function (r) {
-		if (r == true) {
-			location.href = giveupUri;
-		}
-	});
+	// jConfirm("ギブアップしてもよろしいですか？", "確認", function (r) {
+		// if (r == true) {
+			// location.href = giveupUri;
+		// }
+	// });
 }
 
 //クリアボタンのクリックイベント
