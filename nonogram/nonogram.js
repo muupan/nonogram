@@ -13,7 +13,6 @@ var marginLeftOfInputArea = 5;
 var marginTopOfInputArea = 5;
 var marginBetweenInputAreaAndBottomArea = 10;
 var marginBetweenBottomAreaAndButtonArea = 10;
-var screenMargin
 
 //以下非設定項目
 var touchstart;
@@ -267,7 +266,15 @@ window.onload = function(){
 	.css("background-color", selectedColColor)
 	.css("width", inputCellWidth + "px")
 	.css("height", nonogramRect.height + "px");
+	
 	$("#gameScreen").append('<div id="selectedRow"></div>');
+	$("#selectedRow")
+	.css("position", "absolute")
+	.css("left", leftNumberAreaStartX + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("background-color", selectedRowColor)
+	.css("width", nonogramRect.width + "px")
+	.css("height", inputCellHeight + "px");
 
 	// //カウントダウンを表示
 	// $("#gameScreen").append('<div id="countdownWhite"></div>');
