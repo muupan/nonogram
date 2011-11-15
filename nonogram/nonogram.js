@@ -13,6 +13,7 @@ var marginLeftOfInputArea = 5;
 var marginTopOfInputArea = 5;
 var marginBetweenInputAreaAndBottomArea = 10;
 var marginBetweenBottomAreaAndButtonArea = 10;
+var screenMargin
 
 //以下非設定項目
 var touchstart;
@@ -35,6 +36,27 @@ var Point = function(x, y) {
 	this.y = y;
 };
 
+var Cell = function(col, row) {
+	this.col = col;
+	this.row = row;
+};
+
+var Rect = function(top, right, bottom, left) {
+	this.top = top;
+	this.right = right;
+	this.bottom = bottom;
+	this.left = left;
+	this.width = right - left + 1;
+	this.height = bottom - top + 1;
+};
+
+var Margin = function(top, right, bottom, left) {
+	this.top = top;
+	this.right = right;
+	this.bottom = bottom;
+	this.left = left;
+}
+
 var upNumberColCount = inputColCount;
 var upNumberRowCount = Math.ceil(inputRowCount / 2);
 var leftNumberColCount = Math.ceil(inputColCount / 2);
@@ -47,10 +69,12 @@ var upNumberCellHeight = Math.floor(inputCellHeight * (2 / 3));
 var leftNumberCellWidth = Math.floor(inputCellWidth * (2 / 3));
 var leftNumberCellHeight = inputCellHeight;
 
-var logoAreaStartX = marginLeft;
-var logoAreaStartY = marginTop;
-var logoAreaWidth = leftNumberCellWidth * leftNumberColCount;
-var logoAreaHeight = upNumberCellHeight * upNumberRowCount;
+// var logoAreaStartX = marginLeft;
+// var logoAreaStartY = marginTop;
+// var logoAreaWidth = leftNumberCellWidth * leftNumberColCount;
+// var logoAreaHeight = upNumberCellHeight * upNumberRowCount;
+
+var upNumberAreaRect = new Rect()
 
 var upNumberAreaStartX = marginLeft + leftNumberCellWidth * leftNumberColCount + marginLeftOfInputArea;
 var upNumberAreaStartY = marginTop;
@@ -115,6 +139,12 @@ var usedItems = {};
 usedItems["1"] = 0;
 usedItems["2"] = 0;
 usedItems["3"] = 0;
+
+var selectedCell = new Cell(0, 0);
+var selectedColColor = "rgba(255, 0, 0, 0.2)";
+var selectedRowColor = "rgba(0, 255, 0, 0.2)";
+
+var nonogramRect = new Rect(marginTop, screenWidth - marginRight, screenWidth - marginBottom, marginLeft);
 
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
@@ -227,6 +257,17 @@ window.onload = function(){
 			.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
 		}
 	}
+	
+	//選択範囲
+	$("#gameScreen").append('<div id="selectedCol"></div>');
+	$("#selectedCol")
+	.css("position", "absolute")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", upNumberAreaStartY + "px")
+	.css("background-color", selectedColColor)
+	.css("width", inputCellWidth + "px")
+	.css("height", nonogramRect.height + "px");
+	$("#gameScreen").append('<div id="selectedRow"></div>');
 
 	// //カウントダウンを表示
 	// $("#gameScreen").append('<div id="countdownWhite"></div>');
