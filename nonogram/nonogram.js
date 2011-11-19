@@ -4,7 +4,7 @@
 
 //以下設定項目
 var screenWidth = 320;
-var usesMouseEvents = true;
+var usesMouseEvents = false;
 var marginLeft = 10;
 var marginRight = 10;
 var marginTop = 10;
@@ -347,6 +347,7 @@ window.onload = function() {
 }
 
 function gameScreen_touchstart(event) {
+	event.preventDefault();
 	startPoint = getTouchPoint(event);
 	startCell = new Cell(selectedCell.col, selectedCell.row);
 	startTime = new Date().getTime();
@@ -356,6 +357,7 @@ function gameScreen_touchstart(event) {
 }
 
 function gameScreen_touchend(event) {
+	event.preventDefault();
 	if (usesMouseEvents) {
 		mouseIsDown = false;
 	}
@@ -423,6 +425,7 @@ function clip(n, min, max) {
 
 // タッチ後に動かしたとき
 function gameScreen_touchmove(event) {
+	event.preventDefault();
 	if (!usesMouseEvents || mouseIsDown) {
 		var currentPoint = getTouchPoint(event);
 		var colChange = Math.floor((currentPoint.x - startPoint.x) / 10);
