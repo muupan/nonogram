@@ -2,6 +2,8 @@
  * @author Owner
  */
 
+//push test
+
 //以下設定項目
 var screenWidth = 320;
 var usesMouseEvents = true;
