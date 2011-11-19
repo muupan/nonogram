@@ -2,8 +2,6 @@
  * @author Owner
  */
 
-//push test
-
 //以下設定項目
 var screenWidth = 320;
 var usesMouseEvents = true;
@@ -147,17 +145,24 @@ var selectedRowColor = "rgba(0, 255, 0, 0.2)";
 
 var nonogramRect = new Rect(marginTop, screenWidth - marginRight, screenWidth - marginBottom, marginLeft);
 
+var startPoint = null;
+var startCell = null;
+var startTime = null;
+
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
 
 // ===============================================
 // ゲーム画面を生成
 // ===============================================
-window.onload = function(){
+window.onload = function() {
 	$("#gameScreen")
 	.css("width", screenWidth + "px")
 	.css("height", screenHeight + "px")
-	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
+	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px")
+	.bind(touchstart, gameScreen_touchstart)
+	.bind(touchmove, gameScreen_touchmove)
+	.bind(touchend, gameScreen_touchend);
 
 	//上の数字セル
 	for (var col = 0; col < upNumberColCount; col++) {
@@ -228,9 +233,7 @@ window.onload = function(){
 	.css("position", "absolute")
 	.css("left", inputAreaStartX + "px")
 	.css("top", inputAreaStartY + "px")
-	.css("width", inputAreaWidth + "px")
-	.bind(touchmove, inputArea_touchmove)
-	.bind(touchend, inputArea_touchend);
+	.css("width", inputAreaWidth + "px");
 
 	//入力セル
 	for (var col = 0; col < inputColCount; col++) {
@@ -254,8 +257,8 @@ window.onload = function(){
 			.css("height", inputCellHeight + "px")
 			.css("line-height", inputCellHeight + "px")
 			.css("text-align", "center")
-			.css("border", "1px solid black")
-			.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
+			.css("border", "1px solid black");
+			//.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
 		}
 	}
 	
@@ -343,6 +346,47 @@ window.onload = function(){
 
 }
 
+function gameScreen_touchstart(event) {
+	startPoint = getTouchPoint(event);
+	startCell = new Cell(selectedCell.col, selectedCell.row);
+	startTime = new Date().getTime();
+	if (usesMouseEvents) {		
+		mouseIsDown = true;
+	}
+}
+
+function gameScreen_touchend(event) {
+	if (usesMouseEvents) {
+		mouseIsDown = false;
+	}
+	var currentTime = new Date().getTime();
+	if (currentTime - startTime < 1000 && startCell.col == selectedCell.col && startCell.row == selectedCell.row) {
+		switch (input[selectedCell.col][selectedCell.row]) {
+		case 0:
+			black(selectedCell.col, selectedCell.row);
+			break;
+		case 1:
+			batsu(selectedCell.col, selectedCell.row);
+			break;
+		case 2:
+			white(selectedCell.col, selectedCell.row);
+			break;
+		}
+	}
+}
+
+function updateSelection(newCell) {
+	//選択範囲
+	$("#selectedCol")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", upNumberAreaStartY + "px");
+	
+	$("#selectedRow")
+	.css("left", leftNumberAreaStartX + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("background-color", selectedRowColor);
+}
+
 // 入力セルがタッチされたとき
 function inputCell_touchstart(event) {
 	if (isPlaying) {
@@ -366,33 +410,46 @@ function inputCell_touchstart(event) {
 	}
 }
 
-// タッチ後に動かしたとき
-function inputArea_touchmove(event) {
-	if (isPlaying && (!usesMouseEvents || mouseIsDown)) {
-		//黒と×は、白い場所にのみ連続して入力できる。白は連続して入力できない。
-		event.preventDefault();
-		var touchPoint = getTouchPoint(event);
-		var col = Math.floor((touchPoint.x - inputAreaStartX) / inputCellWidth);
-		var row = Math.floor((touchPoint.y - inputAreaStartY) / inputCellHeight);
-		if (col >= 0 && col < inputColCount && row >= 0 && row < inputRowCount) {
-			if (col != lastTouchedInputCellCol || row != lastTouchedInputCellRow) {
-				if (input[col][row] == 0) {
-					if (lastInput == 1) {
-						black(col, row);
-					} else if (lastInput == 2) {
-						batsu(col, row);
-					}
-				}
-			}
-		}
+//n<minならminを、min<=n<=maxならnを、max<nならmaxを返す
+function clip(n, min, max) {
+	if (n > max) {
+		return max;
+	} else if (n < min) {
+		return min;
+	} else {
+		return n;
 	}
 }
 
-function inputArea_touchend(event) {
-	if (usesMouseEvents) {
-		mouseIsDown = false;
+// タッチ後に動かしたとき
+function gameScreen_touchmove(event) {
+	if (!usesMouseEvents || mouseIsDown) {
+		var currentPoint = getTouchPoint(event);
+		var colChange = Math.floor((currentPoint.x - startPoint.x) / 10);
+		var rowChange = Math.floor((currentPoint.y - startPoint.y) / 10);
+		selectedCell.col = clip(startCell.col + colChange, 0, upNumberColCount - 1);
+		selectedCell.row = clip(startCell.row + rowChange, 0, leftNumberRowCount - 1);
+		updateSelection();
+		//黒と×は、白い場所にのみ連続して入力できる。白は連続して入力できない。
+		// event.preventDefault();
+		// var touchPoint = getTouchPoint(event);
+		// var col = Math.floor((touchPoint.x - inputAreaStartX) / inputCellWidth);
+		// var row = Math.floor((touchPoint.y - inputAreaStartY) / inputCellHeight);
+		// if (col >= 0 && col < inputColCount && row >= 0 && row < inputRowCount) {
+			// if (col != lastTouchedInputCellCol || row != lastTouchedInputCellRow) {
+				// if (input[col][row] == 0) {
+					// if (lastInput == 1) {
+						// black(col, row);
+					// } else if (lastInput == 2) {
+						// batsu(col, row);
+					// }
+				// }
+			// }
+		// }
 	}
 }
+
+
 
 function getTouchPoint(event) {
 	if (usesMouseEvents) {
