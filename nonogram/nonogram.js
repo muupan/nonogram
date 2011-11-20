@@ -149,6 +149,11 @@ var startPoint = null;
 var startCell = null;
 var startTime = null;
 
+var isContinuousInputMode = false;
+var continuousInputStartCell = null;
+var continuousInputColor = null;
+//color 0:white 1:black 2:batsu
+
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
 
@@ -351,29 +356,59 @@ function gameScreen_touchstart(event) {
 	startPoint = getTouchPoint(event);
 	startCell = new Cell(selectedCell.col, selectedCell.row);
 	startTime = new Date().getTime();
-	if (usesMouseEvents) {		
+	if (usesMouseEvents) {
 		mouseIsDown = true;
 	}
 }
 
 function gameScreen_touchend(event) {
 	event.preventDefault();
+	$("#timer").html(event.originalEvent.touches.length);
 	if (usesMouseEvents) {
 		mouseIsDown = false;
 	}
 	var currentTime = new Date().getTime();
-	if (currentTime - startTime < 1000 && startCell.col == selectedCell.col && startCell.row == selectedCell.row) {
-		switch (input[selectedCell.col][selectedCell.row]) {
-		case 0:
-			black(selectedCell.col, selectedCell.row);
-			break;
-		case 1:
-			batsu(selectedCell.col, selectedCell.row);
-			break;
-		case 2:
-			white(selectedCell.col, selectedCell.row);
-			break;
+	if (startCell.col == selectedCell.col && startCell.row == selectedCell.row) {
+		if (currentTime - startTime < 1000) {
+			if (isContinuousInputMode) {
+				if (continuousInputStartCell.row == selectedCell.row) {
+					var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
+					var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
+					for (var col = fromCol; col <= toCol; col++) {
+						setInputCellColor(col, continuousInputStartCell.row, continuousInputColor);
+					}
+				} else if (continuousInputStartCell.col == selectedCell.col) {
+					var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
+					var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+					for (var row = fromRow; row <= toRow; row++) {
+						setInputCellColor(continuousInputStartCell.col, row, continuousInputColor);
+					}
+				}
+				isContinuousInputMode = false;
+				continuousInputStartCell = null;
+				continuousInputColor = null;
+			} else {
+				changeSelectedCellColor();
+			}
+		} else {
+			isContinuousInputMode = true;
+			continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
+			continuousInputColor = input[selectedCell.col][selectedCell.row];
 		}
+	}
+}
+
+function changeSelectedCellColor() {
+	switch (input[selectedCell.col][selectedCell.row]) {
+	case 0:
+		black(selectedCell.col, selectedCell.row);
+		break;
+	case 1:
+		batsu(selectedCell.col, selectedCell.row);
+		break;
+	case 2:
+		white(selectedCell.col, selectedCell.row);
+		break;
 	}
 }
 
@@ -428,8 +463,27 @@ function gameScreen_touchmove(event) {
 	event.preventDefault();
 	if (!usesMouseEvents || mouseIsDown) {
 		var currentPoint = getTouchPoint(event);
-		var colChange = Math.floor((currentPoint.x - startPoint.x) / 10);
-		var rowChange = Math.floor((currentPoint.y - startPoint.y) / 10);
+		var xChange = currentPoint.x - startPoint.x;
+		var yChange = currentPoint.y - startPoint.y;
+		if (Math.abs(xChange) > Math.abs(yChange) * 5) {
+			yChange = 0;
+		} else if (Math.abs(yChange) > Math.abs(xChange) * 5) {
+			xChange = 0;
+		}
+		//var colChange = 0;
+		//var rowChange = 0;
+		// if (xChange >= 30) {
+			// colChange = Math.floor((xChange - 30) / 30);
+		// } else if (xChange <= -30) {
+			// colChange = Math.floor((xChange + 30) / 30);
+		// }
+		// if (yChange >= 30) {
+			// rowChange = Math.floor((yChange - 30) / 30);
+		// } else if (yChange <= -30) {
+			// rowChange = Math.floor((yChange + 30) / 30);
+		// }
+		var colChange = Math.floor(xChange / 30);
+		var rowChange = Math.floor(yChange / 30);
 		selectedCell.col = clip(startCell.col + colChange, 0, upNumberColCount - 1);
 		selectedCell.row = clip(startCell.row + rowChange, 0, leftNumberRowCount - 1);
 		updateSelection();
@@ -459,6 +513,20 @@ function getTouchPoint(event) {
 		return new Point(event.originalEvent.pageX, event.originalEvent.pageY);
 	} else {
 		return new Point(event.originalEvent.touches[0].pageX, event.originalEvent.touches[0].pageY);
+	}
+}
+
+function setInputCellColor(col, row, color) {
+	switch (color) {
+	case 0:
+		white(col, row);
+		break;
+	case 1:
+		black(col, row);
+		break;
+	case 2:
+		batsu(col, row);
+		break;
 	}
 }
 
