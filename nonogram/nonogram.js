@@ -143,9 +143,10 @@ usedItems["3"] = 0;
 
 var selectedCell = new Cell(0, 0);
 var selectedColColor = "rgba(255, 0, 0, 0.2)";
-var selectedRowColor = "rgba(0, 255, 0, 0.2)";
+var selectedRowColor = "rgba(255, 0, 0, 0.2)";
+var selectedCellColor = "rgba(255, 0, 0, 0.2)";
 
-var nonogramRect = new Rect(marginTop, screenWidth - marginRight, screenWidth - marginBottom, marginLeft);
+var nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
 
 var startPoint = null;
 var startCell = null;
@@ -178,10 +179,13 @@ var animationTimerId = setInterval(function () {
 		var toRow = Math.max(continuousInputStartCell.row, toCell.row);
 		for (var col = fromCol; col <= toCol; col++) {
 			$("#" + getOverlapCellId(col, continuousInputStartCell.row))
+			.css("-webkit-transform", "rotate(" + deg + "deg)")
 			.css("-moz-transform", "rotate(" + deg + "deg)");
+			
 		}
 		for (var row = fromRow; row <= toRow; row++) {
 			$("#" + getOverlapCellId(continuousInputStartCell.col, row))
+			.css("-webkit-transform", "rotate(" + deg + "deg)")
 			.css("-moz-transform", "rotate(" + deg + "deg)");
 		}
 	}
@@ -307,8 +311,11 @@ window.onload = function() {
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", upNumberAreaStartY + "px")
 	.css("background-color", selectedColColor)
-	.css("width", inputCellWidth + "px")
-	.css("height", nonogramRect.height + "px");
+	//.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (inputCellWidth - 0) + "px")
+	.css("height", (nonogramRect.height - 0) + "px");
 	
 	$("#gameScreen").append('<div id="selectedRow"></div>');
 	$("#selectedRow")
@@ -316,8 +323,23 @@ window.onload = function() {
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("background-color", selectedRowColor)
-	.css("width", nonogramRect.width + "px")
-	.css("height", inputCellHeight + "px");
+	//.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (nonogramRect.width - 0) + "px")
+	.css("height", (inputCellHeight - 0) + "px");
+	
+	$("#gameScreen").append('<div id="selectedCell"></div>');
+	$("#selectedCell")
+	.css("position", "absolute")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("background-color", selectedCellColor)
+	.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (inputCellWidth - 2) + "px")
+	.css("height", (inputCellHeight - 2) + "px");
 
 	// //カウントダウンを表示
 	// $("#gameScreen").append('<div id="countdownWhite"></div>');
@@ -391,7 +413,16 @@ function gameScreen_touchstart(event) {
 	startCell = new Cell(selectedCell.col, selectedCell.row);
 	startTime = new Date().getTime();
 	hasMoved = false;
-	if (!isContinuousInputMode) {
+	if (isContinuousInputMode) {
+		continuousInputModeTimeout = setTimeout(function () {
+			if (startPoint != null && !hasMoved) {
+				deleteOverlapCells();
+				isContinuousInputMode = false;
+				continuousInputStartCell = null;
+				continuousInputColor = null;
+			}
+		}, 1000);
+	} else {
 		continuousInputModeTimeout = setTimeout(function () {
 			if (startPoint != null && !hasMoved) {
 				isContinuousInputMode = true;
@@ -413,9 +444,7 @@ function gameScreen_touchend(event) {
 		mouseIsDown = false;
 	}
 	var currentTime = new Date().getTime();
-	if (!isContinuousInputMode) {
-		clearTimeout(continuousInputModeTimeout);
-	}
+	clearTimeout(continuousInputModeTimeout);
 	if (!hasMoved) {
 		if (currentTime - startTime < 1000) {
 			if (isContinuousInputMode) {
@@ -469,8 +498,12 @@ function updateSelection(newCell) {
 	
 	$("#selectedRow")
 	.css("left", leftNumberAreaStartX + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("background-color", selectedRowColor);
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px");
+	
+	$("#selectedCell")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px");
+	
 }
 
 function deleteOverlapCells() {
@@ -545,18 +578,43 @@ function deleteOverlapCell(col, row) {
 }
 
 function createOverlapCell(col, row, color) {
+	var id = getOverlapCellId(col, row);
 	//salert("create");
-	$("#inputArea").append('<div id="' + getOverlapCellId(col, row) + '"></div>');
-	$("#" + getOverlapCellId(col, row))
+	$("#inputArea").append('<div id="' + id + '"></div>');
+	$("#" + id)
 	.css("position", "absolute")
 	.css("left", (col * inputCellWidth) + "px")
 	.css("top", (row * inputCellHeight) + "px")
-	.css("background-color", "rgba(0, 0, 255, 0.5)")
 	.css("width", inputCellWidth + "px")
 	.css("height", inputCellHeight + "px")
 	.css("line-height", inputCellHeight + "px")
 	.css("text-align", "center");
-	//.css("border", "1px solid black");
+	switch (color) {
+	case 0:
+		$("#" + id).css("background-color", "rgba(255, 255, 255, 0.8)");
+		break;
+	case 1:
+		$("#" + id).css("background-color", "rgba(0, 0, 0, 0.8)");
+		break;
+	case 2:
+		$("#" + id)
+		.css("background-color", "rgba(255, 255, 255, 0.8)")
+		.html('<canvas id="' + id + '_batsu" width="' + inputCellWidth + '" height="' + inputCellHeight + '">×</canvas>');
+		var canvas = document.getElementById(id + '_batsu');
+		//Canvas要素の対応チェック
+		if (canvas && canvas.getContext) {
+			var ctx = canvas.getContext('2d');
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(inputCellWidth, inputCellHeight);
+			ctx.moveTo(0, inputCellHeight);
+			ctx.lineTo(inputCellWidth, 0);
+			ctx.closePath();
+			ctx.stroke();
+		}
+		break;
+	}
 }
 
 // 入力セルがタッチされたとき
@@ -600,9 +658,9 @@ function gameScreen_touchmove(event) {
 		var currentPoint = getTouchPoint(event);
 		var xChange = currentPoint.x - startPoint.x;
 		var yChange = currentPoint.y - startPoint.y;
-		if (Math.abs(xChange) > Math.abs(yChange) * 5) {
+		if (Math.abs(xChange) > Math.abs(yChange) * 3) {
 			yChange = 0;
-		} else if (Math.abs(yChange) > Math.abs(xChange) * 5) {
+		} else if (Math.abs(yChange) > Math.abs(xChange) * 3) {
 			xChange = 0;
 		}
 		var colChange = Math.floor(xChange / 30);
@@ -685,6 +743,7 @@ function batsu(col, row) {
 	if (canvas && canvas.getContext) {
 		var ctx = canvas.getContext('2d');
 		ctx.lineWidth = 1;
+		ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
 		ctx.beginPath();
 		ctx.moveTo(0, 0);
 		ctx.lineTo(inputCellWidth, inputCellHeight);
