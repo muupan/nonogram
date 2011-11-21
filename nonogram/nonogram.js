@@ -4,7 +4,7 @@
 
 //以下設定項目
 var screenWidth = 320;
-var usesMouseEvents = true;
+var usesMouseEvents = false;
 var marginLeft = 10;
 var marginRight = 10;
 var marginTop = 10;
@@ -393,7 +393,7 @@ function gameScreen_touchstart(event) {
 	hasMoved = false;
 	if (!isContinuousInputMode) {
 		continuousInputModeTimeout = setTimeout(function () {
-			if (!hasMoved) {
+			if (startPoint != null && !hasMoved) {
 				isContinuousInputMode = true;
 				continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
 				continuousInputColor = getNextInputColor(input[selectedCell.col][selectedCell.row]);
@@ -413,6 +413,9 @@ function gameScreen_touchend(event) {
 		mouseIsDown = false;
 	}
 	var currentTime = new Date().getTime();
+	if (!isContinuousInputMode) {
+		clearTimeout(continuousInputModeTimeout);
+	}
 	if (!hasMoved) {
 		if (currentTime - startTime < 1000) {
 			if (isContinuousInputMode) {
@@ -439,6 +442,9 @@ function gameScreen_touchend(event) {
 		}
 	}
 	hasMoved = false;
+	startPoint = null;
+	startCell = null;
+	startTime = null;
 }
 
 function changeSelectedCellColor() {
