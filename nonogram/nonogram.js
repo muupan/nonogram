@@ -4,7 +4,7 @@
 
 //以下設定項目
 var screenWidth = 320;
-var usesMouseEvents = false;
+var usesMouseEvents = true;
 var marginLeft = 10;
 var marginRight = 10;
 var marginTop = 10;
@@ -15,6 +15,8 @@ var marginBetweenInputAreaAndBottomArea = 10;
 var marginBetweenBottomAreaAndButtonArea = 10;
 
 //以下非設定項目
+
+//タッチイベントをマウスイベントで置き換え
 var touchstart;
 var touchmove;
 var touchend;
@@ -27,7 +29,7 @@ if (usesMouseEvents) {
 	touchmove = "touchmove";
 	touchend = "touchend";
 }
-
+//mousemoveはボタンを押さなくても発生するので、ボタンを押しているかどうかの記録が必要
 var mouseIsDown = false;
 
 var Point = function(x, y) {
@@ -148,11 +150,42 @@ var nonogramRect = new Rect(marginTop, screenWidth - marginRight, screenWidth - 
 var startPoint = null;
 var startCell = null;
 var startTime = null;
+var hasMoved = false;
 
 var isContinuousInputMode = false;
 var continuousInputStartCell = null;
 var continuousInputColor = null;
 //color 0:white 1:black 2:batsu
+
+var continuousInputModeTimeout = null;
+
+var deg = 0;
+var animationTimerId = setInterval(function () {
+	if (isContinuousInputMode) {
+		deg += 10;
+		if (deg >= 360) {
+			deg -= 360;
+		}
+		var toCell = null;
+		if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
+			toCell = selectedCell;
+		} else {
+			toCell = continuousInputStartCell;
+		}
+		var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
+		var toCol = Math.max(continuousInputStartCell.col, toCell.col);
+		var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
+		var toRow = Math.max(continuousInputStartCell.row, toCell.row);
+		for (var col = fromCol; col <= toCol; col++) {
+			$("#" + getOverlapCellId(col, continuousInputStartCell.row))
+			.css("-moz-transform", "rotate(" + deg + "deg)");
+		}
+		for (var row = fromRow; row <= toRow; row++) {
+			$("#" + getOverlapCellId(continuousInputStartCell.col, row))
+			.css("-moz-transform", "rotate(" + deg + "deg)");
+		}
+	}
+}, 50);
 
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
@@ -352,10 +385,22 @@ window.onload = function() {
 }
 
 function gameScreen_touchstart(event) {
+	//alert("mousedown");
 	event.preventDefault();
 	startPoint = getTouchPoint(event);
 	startCell = new Cell(selectedCell.col, selectedCell.row);
 	startTime = new Date().getTime();
+	hasMoved = false;
+	if (!isContinuousInputMode) {
+		continuousInputModeTimeout = setTimeout(function () {
+			if (!hasMoved) {
+				isContinuousInputMode = true;
+				continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
+				continuousInputColor = getNextInputColor(input[selectedCell.col][selectedCell.row]);
+				updateOverlapCells();
+			}
+		}, 1000);
+	}
 	if (usesMouseEvents) {
 		mouseIsDown = true;
 	}
@@ -363,12 +408,12 @@ function gameScreen_touchstart(event) {
 
 function gameScreen_touchend(event) {
 	event.preventDefault();
-	$("#timer").html(event.originalEvent.touches.length);
+	//$("#timer").html(event.originalEvent.touches.length);
 	if (usesMouseEvents) {
 		mouseIsDown = false;
 	}
 	var currentTime = new Date().getTime();
-	if (startCell.col == selectedCell.col && startCell.row == selectedCell.row) {
+	if (!hasMoved) {
 		if (currentTime - startTime < 1000) {
 			if (isContinuousInputMode) {
 				if (continuousInputStartCell.row == selectedCell.row) {
@@ -384,18 +429,16 @@ function gameScreen_touchend(event) {
 						setInputCellColor(continuousInputStartCell.col, row, continuousInputColor);
 					}
 				}
+				deleteOverlapCells();
 				isContinuousInputMode = false;
 				continuousInputStartCell = null;
 				continuousInputColor = null;
 			} else {
 				changeSelectedCellColor();
 			}
-		} else {
-			isContinuousInputMode = true;
-			continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
-			continuousInputColor = input[selectedCell.col][selectedCell.row];
 		}
 	}
+	hasMoved = false;
 }
 
 function changeSelectedCellColor() {
@@ -422,6 +465,92 @@ function updateSelection(newCell) {
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("background-color", selectedRowColor);
+}
+
+function deleteOverlapCells() {
+	var toCell = null;
+	if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
+		toCell = selectedCell;
+	} else {
+		toCell = continuousInputStartCell;
+	}
+	var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
+	var toCol = Math.max(continuousInputStartCell.col, toCell.col);
+	var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
+	var toRow = Math.max(continuousInputStartCell.row, toCell.row);
+	for (var col = fromCol; col <= toCol; col++) {
+		$("#" + getOverlapCellId(col, continuousInputStartCell.row))
+		.remove();
+	}
+	for (var row = fromRow; row <= toRow; row++) {
+		$("#" + getOverlapCellId(continuousInputStartCell.col, row))
+		.remove();
+	}
+}
+
+function updateOverlapCells() {
+	if (isContinuousInputMode) {
+		var toCell = null;
+		if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
+			toCell = selectedCell;
+		} else {
+			toCell = continuousInputStartCell;
+		}
+		var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
+		var toCol = Math.max(continuousInputStartCell.col, toCell.col);
+		var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
+		var toRow = Math.max(continuousInputStartCell.row, toCell.row);
+		for (var col = 0; col < fromCol; col++) {
+			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() > 0) {
+				deleteOverlapCell(col, continuousInputStartCell.row);
+			}
+		}
+		for (var col = fromCol; col <= toCol; col++) {
+			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() == 0) {
+				createOverlapCell(col, continuousInputStartCell.row, continuousInputColor);
+			}
+		}
+		for (var col = toCol + 1; col < inputColCount; col++) {
+			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() > 0) {
+				deleteOverlapCell(col, continuousInputStartCell.row);
+			}
+		}
+		for (var row = 0; row < fromRow; row++) {
+			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() > 0) {
+				deleteOverlapCell(continuousInputStartCell.col, row);
+			}
+		}
+		for (var row = fromRow; row <= toRow; row++) {
+			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() == 0) {
+				createOverlapCell(continuousInputStartCell.col, row, continuousInputColor);
+			}
+		}
+		for (var row = toRow + 1; row < inputRowCount; row++) {
+			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() > 0) {
+				deleteOverlapCell(continuousInputStartCell.col, row);
+			}
+		}
+	}
+}
+
+function deleteOverlapCell(col, row) {
+	//alert("delete " + getOverlapCellId(col, row));
+	$("#" + getOverlapCellId(col, row)).remove();
+}
+
+function createOverlapCell(col, row, color) {
+	//salert("create");
+	$("#inputArea").append('<div id="' + getOverlapCellId(col, row) + '"></div>');
+	$("#" + getOverlapCellId(col, row))
+	.css("position", "absolute")
+	.css("left", (col * inputCellWidth) + "px")
+	.css("top", (row * inputCellHeight) + "px")
+	.css("background-color", "rgba(0, 0, 255, 0.5)")
+	.css("width", inputCellWidth + "px")
+	.css("height", inputCellHeight + "px")
+	.css("line-height", inputCellHeight + "px")
+	.css("text-align", "center");
+	//.css("border", "1px solid black");
 }
 
 // 入力セルがタッチされたとき
@@ -470,49 +599,37 @@ function gameScreen_touchmove(event) {
 		} else if (Math.abs(yChange) > Math.abs(xChange) * 5) {
 			xChange = 0;
 		}
-		//var colChange = 0;
-		//var rowChange = 0;
-		// if (xChange >= 30) {
-			// colChange = Math.floor((xChange - 30) / 30);
-		// } else if (xChange <= -30) {
-			// colChange = Math.floor((xChange + 30) / 30);
-		// }
-		// if (yChange >= 30) {
-			// rowChange = Math.floor((yChange - 30) / 30);
-		// } else if (yChange <= -30) {
-			// rowChange = Math.floor((yChange + 30) / 30);
-		// }
 		var colChange = Math.floor(xChange / 30);
 		var rowChange = Math.floor(yChange / 30);
+		if (colChange != 0 || rowChange != 0) {
+			hasMoved = true;
+		}
+		var oldSelectedCell = new Cell(selectedCell.col, selectedCell.row);
 		selectedCell.col = clip(startCell.col + colChange, 0, upNumberColCount - 1);
 		selectedCell.row = clip(startCell.row + rowChange, 0, leftNumberRowCount - 1);
-		updateSelection();
-		//黒と×は、白い場所にのみ連続して入力できる。白は連続して入力できない。
-		// event.preventDefault();
-		// var touchPoint = getTouchPoint(event);
-		// var col = Math.floor((touchPoint.x - inputAreaStartX) / inputCellWidth);
-		// var row = Math.floor((touchPoint.y - inputAreaStartY) / inputCellHeight);
-		// if (col >= 0 && col < inputColCount && row >= 0 && row < inputRowCount) {
-			// if (col != lastTouchedInputCellCol || row != lastTouchedInputCellRow) {
-				// if (input[col][row] == 0) {
-					// if (lastInput == 1) {
-						// black(col, row);
-					// } else if (lastInput == 2) {
-						// batsu(col, row);
-					// }
-				// }
-			// }
-		// }
+		if (oldSelectedCell.col != selectedCell.col || oldSelectedCell.row != selectedCell.row) {
+			updateSelection();
+			updateOverlapCells();
+		}
 	}
 }
-
-
 
 function getTouchPoint(event) {
 	if (usesMouseEvents) {
 		return new Point(event.originalEvent.pageX, event.originalEvent.pageY);
 	} else {
 		return new Point(event.originalEvent.touches[0].pageX, event.originalEvent.touches[0].pageY);
+	}
+}
+
+function getNextInputColor(color) {
+	switch (color) {
+	case 0:
+		return 1;
+	case 1:
+		return 2;
+	case 2:
+		return 0;
 	}
 }
 
@@ -597,6 +714,10 @@ function white(col, row) {
 
 function getInputCellId(col, row) {
 	return "inputCell_" + col + "_" + row;
+}
+
+function getOverlapCellId(col, row) {
+	return "overlapCell_" + col + "_" + row;
 }
 
 function getUpNumberCellId(col, row) {
