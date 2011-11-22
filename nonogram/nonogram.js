@@ -172,26 +172,16 @@ var animationTimerId = setInterval(function () {
 		if (deg >= 360) {
 			deg -= 360;
 		}
-		var toCell = null;
-		if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
-			toCell = selectedCell;
-		} else {
-			toCell = continuousInputStartCell;
-		}
-		var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
-		var toCol = Math.max(continuousInputStartCell.col, toCell.col);
-		var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
-		var toRow = Math.max(continuousInputStartCell.row, toCell.row);
+		var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
+		var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
+		var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
+		var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
 		for (var col = fromCol; col <= toCol; col++) {
-			$("#" + getOverlapCellId(col, continuousInputStartCell.row))
-			.css("-webkit-transform", "rotate(" + deg + "deg)")
-			.css("-moz-transform", "rotate(" + deg + "deg)");
-			
-		}
-		for (var row = fromRow; row <= toRow; row++) {
-			$("#" + getOverlapCellId(continuousInputStartCell.col, row))
-			.css("-webkit-transform", "rotate(" + deg + "deg)")
-			.css("-moz-transform", "rotate(" + deg + "deg)");
+			for (var row = fromRow; row <= toRow; row++) {
+				$("#" + getOverlapCellId(col, row))
+				.css("-webkit-transform", "rotate(" + deg + "deg)")
+				.css("-moz-transform", "rotate(" + deg + "deg)");
+			}	
 		}
 	}
 }, 50);
@@ -480,17 +470,13 @@ function gameScreen_touchend(event) {
 	if (!hasMoved) {
 		if (currentTime - startTime < continuousInputModeTime) {
 			if (isContinuousInputMode) {
-				if (continuousInputStartCell.row == selectedCell.row) {
-					var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
-					var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
-					for (var col = fromCol; col <= toCol; col++) {
-						setInputCellColor(col, continuousInputStartCell.row, continuousInputColor);
-					}
-				} else if (continuousInputStartCell.col == selectedCell.col) {
-					var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
-					var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+				var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
+				var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
+				var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
+				var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+				for (var col = fromCol; col <= toCol; col++) {
 					for (var row = fromRow; row <= toRow; row++) {
-						setInputCellColor(continuousInputStartCell.col, row, continuousInputColor);
+						setInputCellColor(col, row, continuousInputColor);
 					}
 				}
 				deleteOverlapCells();
@@ -539,66 +525,34 @@ function updateSelection(newCell) {
 }
 
 function deleteOverlapCells() {
-	var toCell = null;
-	if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
-		toCell = selectedCell;
-	} else {
-		toCell = continuousInputStartCell;
-	}
-	var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
-	var toCol = Math.max(continuousInputStartCell.col, toCell.col);
-	var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
-	var toRow = Math.max(continuousInputStartCell.row, toCell.row);
+	var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
+	var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
+	var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
+	var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
 	for (var col = fromCol; col <= toCol; col++) {
-		$("#" + getOverlapCellId(col, continuousInputStartCell.row))
-		.remove();
-	}
-	for (var row = fromRow; row <= toRow; row++) {
-		$("#" + getOverlapCellId(continuousInputStartCell.col, row))
-		.remove();
+		for (var row = fromRow; row <= toRow; row++) {
+			$("#" + getOverlapCellId(col, row)).remove();
+		}
 	}
 }
 
 function updateOverlapCells() {
 	if (isContinuousInputMode) {
-		var toCell = null;
-		if (continuousInputStartCell.col == selectedCell.col || continuousInputStartCell.row == selectedCell.row) {
-			toCell = selectedCell;
-		} else {
-			toCell = continuousInputStartCell;
-		}
-		var fromCol = Math.min(continuousInputStartCell.col, toCell.col);
-		var toCol = Math.max(continuousInputStartCell.col, toCell.col);
-		var fromRow = Math.min(continuousInputStartCell.row, toCell.row);
-		var toRow = Math.max(continuousInputStartCell.row, toCell.row);
-		for (var col = 0; col < fromCol; col++) {
-			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() > 0) {
-				deleteOverlapCell(col, continuousInputStartCell.row);
-			}
-		}
-		for (var col = fromCol; col <= toCol; col++) {
-			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() == 0) {
-				createOverlapCell(col, continuousInputStartCell.row, continuousInputColor);
-			}
-		}
-		for (var col = toCol + 1; col < inputColCount; col++) {
-			if ($("#" + getOverlapCellId(col, continuousInputStartCell.row)).size() > 0) {
-				deleteOverlapCell(col, continuousInputStartCell.row);
-			}
-		}
-		for (var row = 0; row < fromRow; row++) {
-			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() > 0) {
-				deleteOverlapCell(continuousInputStartCell.col, row);
-			}
-		}
-		for (var row = fromRow; row <= toRow; row++) {
-			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() == 0) {
-				createOverlapCell(continuousInputStartCell.col, row, continuousInputColor);
-			}
-		}
-		for (var row = toRow + 1; row < inputRowCount; row++) {
-			if ($("#" + getOverlapCellId(continuousInputStartCell.col, row)).size() > 0) {
-				deleteOverlapCell(continuousInputStartCell.col, row);
+		var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
+		var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
+		var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
+		var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+		for (var col = 0; col < inputColCount; col++) {
+			for (var row = 0; row < inputRowCount; row++) {
+				if (col >= fromCol && col <= toCol && row >= fromRow && row <= toRow) {
+					if ($("#" + getOverlapCellId(col, row)).size() == 0) {
+						createOverlapCell(col, row, continuousInputColor);
+					}
+				} else {
+					if ($("#" + getOverlapCellId(col, row)).size() > 0) {
+						deleteOverlapCell(col, row);
+					}
+				}
 			}
 		}
 	}
