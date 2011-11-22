@@ -4,7 +4,7 @@
 
 //以下設定項目
 const screenWidth = 320;
-const usesMouseEvents = false;
+const usesMouseEvents = true;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -14,7 +14,7 @@ const marginTopOfInputArea = 5;
 const marginBetweenInputAreaAndBottomArea = 10;
 const marginBetweenBottomAreaAndButtonArea = 10;
 const continuousInputModeTime = 600;
-const inputHistoryCount = 10;
+const inputHistoryMaxCount = 10;
 
 //以下非設定項目
 
@@ -110,8 +110,8 @@ for (var col = 0; col < inputColCount; col++) {
 		input[col][row] = 0;
 	}
 }
-
-var inputHistory = new Array(inputHistoryCount);
+var inputHistoryCount = 0;
+var inputHistory = new Array();
 backupInput();
 
 var upNumberColCorrectness = new Array(upNumberColCount);
@@ -164,7 +164,7 @@ var continuousInputColor = null;
 //color 0:white 1:black 2:batsu
 
 var continuousInputModeTimeout = null;
-
+/*
 var deg = 0;
 var animationTimerId = setInterval(function () {
 	if (isContinuousInputMode) {
@@ -185,7 +185,7 @@ var animationTimerId = setInterval(function () {
 		}
 	}
 }, 50);
-
+*/
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
 
@@ -408,6 +408,11 @@ window.onload = function() {
 }
 
 function backupInput() {
+	if (inputHistoryCount == inputHistoryMaxCount) {
+		inputHistory.shift();
+	} else {
+		inputHistoryCount++;
+	}
 	var backup = new Array(inputColCount);
 	for (var col = 0; col < inputColCount; col++) {
 		backup[col] = new Array(inputRowCount);
@@ -419,11 +424,14 @@ function backupInput() {
 }
 
 function restoreInput() {
-	var backup = inputHistory.pop();
-	for (var col = 0; col < inputColCount; col++) {
-		for (var row = 0; row < inputRowCount; row++) {
-			input[col][row] = backup[col][row];
+	if (inputHistoryCount > 0) {
+		var backup = inputHistory.pop();
+		for (var col = 0; col < inputColCount; col++) {
+			for (var row = 0; row < inputRowCount; row++) {
+				input[col][row] = backup[col][row];
+			}
 		}
+		inputHistoryCount--;
 	}
 }
 
@@ -486,6 +494,7 @@ function gameScreen_touchend(event) {
 			} else {
 				changeSelectedCellColor();
 			}
+			backupInput();
 		}
 	}
 	hasMoved = false;
@@ -569,34 +578,35 @@ function createOverlapCell(col, row, color) {
 	$("#gameScreen").append('<div id="' + id + '"></div>');
 	$("#" + id)
 	.css("position", "absolute")
-	.css("left", (inputAreaStartX + col * inputCellWidth) + "px")
-	.css("top", (inputAreaStartY + row * inputCellHeight) + "px")
-	.css("width", (inputCellWidth - 1) + "px")
-	.css("height", (inputCellHeight - 1) + "px")
+	.css("left", (inputAreaStartX + col * inputCellWidth + 3) + "px")
+	.css("top", (inputAreaStartY + row * inputCellHeight + 3) + "px")
+	.css("width", (inputCellWidth - 7) + "px")
+	.css("height", (inputCellHeight - 7) + "px")
 	.css("line-height", inputCellHeight + "px")
-	.css("border", "solid 1px rgba(0, 0, 0, 0.8)")
+	.css("border", "solid 1px rgba(127, 127, 127, 0.8)")
 	.css("text-align", "center");
 	switch (color) {
 	case 0:
 		$("#" + id).css("background-color", "rgba(255, 255, 255, 0.8)");
 		break;
 	case 1:
-		$("#" + id).css("background-color", "rgba(0, 0, 0, 0.8)");
+		$("#" + id).css("background-color", "rgba(127, 127, 127, 0.8)");
 		break;
 	case 2:
 		$("#" + id)
 		.css("background-color", "rgba(255, 255, 255, 0.8)")
-		.html('<canvas id="' + id + '_batsu" width="' + inputCellWidth + '" height="' + inputCellHeight + '">×</canvas>');
+		.html('<canvas id="' + id + '_batsu" width="' + (inputCellWidth - 7) + '" height="' + (inputCellHeight - 7) + '">×</canvas>');
 		var canvas = document.getElementById(id + '_batsu');
 		//Canvas要素の対応チェック
 		if (canvas && canvas.getContext) {
 			var ctx = canvas.getContext('2d');
 			ctx.lineWidth = 1;
+			ctx.strokeStyle = "rgba(127, 127, 127, 0.8)";
 			ctx.beginPath();
 			ctx.moveTo(0, 0);
-			ctx.lineTo(inputCellWidth, inputCellHeight);
-			ctx.moveTo(0, inputCellHeight);
-			ctx.lineTo(inputCellWidth, 0);
+			ctx.lineTo(inputCellWidth - 7, inputCellHeight - 7);
+			ctx.moveTo(0, inputCellHeight - 7);
+			ctx.lineTo(inputCellWidth - 7, 0);
 			ctx.closePath();
 			ctx.stroke();
 		}
