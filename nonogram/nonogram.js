@@ -4,7 +4,7 @@
 
 //以下設定項目
 const screenWidth = 320;
-const usesMouseEvents = true;
+const usesMouseEvents = false;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -295,12 +295,14 @@ window.onload = function() {
 			.css("left", x + "px")
 			.css("top", y + "px")
 			.css("background-color", color)
-			.css("width", (inputCellWidth - 1) + "px")
-			.css("height", (inputCellHeight - 1) + "px")
-			.css("line-height", (inputCellHeight - 1) + "px")
+			.css("width", (inputCellWidth - 2) + "px")
+			.css("height", (inputCellHeight - 2) + "px")
+			.css("line-height", (inputCellHeight - 2) + "px")
 			.css("text-align", "center")
-			.css("border", "1px solid black");
-			//.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
+			.css("border-top", "1px solid rgb(200, 200, 200)")
+			.css("border-right", "1px solid rgb(100, 100, 100)")
+			.css("border-bottom", "1px solid rgb(50, 50, 50)")
+			.css("border-left", "1px solid rgb(150, 150, 150)");
 		}
 	}
 	
@@ -740,12 +742,12 @@ function batsu(col, row) {
 	if (canvas && canvas.getContext) {
 		var ctx = canvas.getContext('2d');
 		ctx.lineWidth = 1;
-		ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+		ctx.strokeStyle = "rgba(0, 0, 0)";
 		ctx.beginPath();
-		ctx.moveTo(0, 0);
-		ctx.lineTo(inputCellWidth, inputCellHeight);
-		ctx.moveTo(0, inputCellHeight);
-		ctx.lineTo(inputCellWidth, 0);
+		ctx.moveTo(3, 3);
+		ctx.lineTo(inputCellWidth - 5, inputCellHeight - 5);
+		ctx.moveTo(3, inputCellHeight - 5);
+		ctx.lineTo(inputCellWidth - 5, 3);
 		ctx.closePath();
 		ctx.stroke();
 	}
