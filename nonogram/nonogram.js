@@ -14,6 +14,7 @@ const marginTopOfInputArea = 5;
 const marginBetweenInputAreaAndBottomArea = 10;
 const marginBetweenBottomAreaAndButtonArea = 10;
 const continuousInputModeTime = 600;
+const inputHistoryCount = 10;
 
 //以下非設定項目
 
@@ -110,6 +111,9 @@ for (var col = 0; col < inputColCount; col++) {
 	}
 }
 
+var inputHistory = new Array(inputHistoryCount);
+backupInput();
+
 var upNumberColCorrectness = new Array(upNumberColCount);
 var leftNumberRowCorrectness = new Array(leftNumberRowCount);
 for (var col = 0; col < inputColCount; col++) {
@@ -199,6 +203,8 @@ $('<img src="/img/clear.gif">');
 // ゲーム画面を生成
 // ===============================================
 window.onload = function() {
+	setTimeout(doScroll, 100);
+	
 	$("#gameScreen")
 	.css("width", screenWidth + "px")
 	.css("height", screenHeight + "px")
@@ -277,6 +283,9 @@ window.onload = function() {
 	.css("left", inputAreaStartX + "px")
 	.css("top", inputAreaStartY + "px")
 	.css("width", inputAreaWidth + "px");
+	//.bind(touchstart, gameScreen_touchstart)
+	//.bind(touchmove, gameScreen_touchmove);
+	
 
 	//入力セル
 	for (var col = 0; col < inputColCount; col++) {
@@ -335,6 +344,7 @@ window.onload = function() {
 	.css("position", "absolute")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("z-index", "1000")
 	.css("background-color", selectedCellColor)
 	.css("border-style", "solid")
 	.css("border-width", "2px")
@@ -405,6 +415,26 @@ window.onload = function() {
 	$("#buttonArea").append('<input type="button" id="giveupButton" name="giveupButton" value="ギブアップする" />');
 	$("#giveupButton").bind("click", giveupButton_click);
 
+}
+
+function backupInput() {
+	var backup = new Array(inputColCount);
+	for (var col = 0; col < inputColCount; col++) {
+		backup[col] = new Array(inputRowCount);
+		for (var row = 0; row < inputRowCount; row++) {
+			backup[col][row] = input[col][row];
+		}
+	}
+	inputHistory.push(backup);
+}
+
+function restoreInput() {
+	var backup = inputHistory.pop();
+	for (var col = 0; col < inputColCount; col++) {
+		for (var row = 0; row < inputRowCount; row++) {
+			input[col][row] = backup[col][row];
+		}
+	}
 }
 
 function gameScreen_touchstart(event) {
@@ -582,14 +612,15 @@ function deleteOverlapCell(col, row) {
 function createOverlapCell(col, row, color) {
 	var id = getOverlapCellId(col, row);
 	//salert("create");
-	$("#inputArea").append('<div id="' + id + '"></div>');
+	$("#gameScreen").append('<div id="' + id + '"></div>');
 	$("#" + id)
 	.css("position", "absolute")
-	.css("left", (col * inputCellWidth) + "px")
-	.css("top", (row * inputCellHeight) + "px")
-	.css("width", inputCellWidth + "px")
-	.css("height", inputCellHeight + "px")
+	.css("left", (inputAreaStartX + col * inputCellWidth) + "px")
+	.css("top", (inputAreaStartY + row * inputCellHeight) + "px")
+	.css("width", (inputCellWidth - 1) + "px")
+	.css("height", (inputCellHeight - 1) + "px")
 	.css("line-height", inputCellHeight + "px")
+	.css("border", "solid 1px rgba(0, 0, 0, 0.8)")
 	.css("text-align", "center");
 	switch (color) {
 	case 0:
@@ -1076,4 +1107,10 @@ function clearButton_click(event) {
 
 function getHiddenInputTagString(name, value) {
 	return '<input type="hidden" name="' + name +'" value="' + value + '" />';
+}
+
+function doScroll(){
+	if(window.pageYOffset === 0){
+		window.scrollTo(0,1);
+	}
 }
