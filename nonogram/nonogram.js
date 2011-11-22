@@ -3,16 +3,17 @@
  */
 
 //以下設定項目
-var screenWidth = 320;
-var usesMouseEvents = false;
-var marginLeft = 10;
-var marginRight = 10;
-var marginTop = 10;
-var marginBottom = 10;
-var marginLeftOfInputArea = 5;
-var marginTopOfInputArea = 5;
-var marginBetweenInputAreaAndBottomArea = 10;
-var marginBetweenBottomAreaAndButtonArea = 10;
+const screenWidth = 320;
+const usesMouseEvents = false;
+const marginLeft = 10;
+const marginRight = 10;
+const marginTop = 10;
+const marginBottom = 10;
+const marginLeftOfInputArea = 5;
+const marginTopOfInputArea = 5;
+const marginBetweenInputAreaAndBottomArea = 10;
+const marginBetweenBottomAreaAndButtonArea = 10;
+const continuousInputModeTime = 600;
 
 //以下非設定項目
 
@@ -295,9 +296,9 @@ window.onload = function() {
 			.css("left", x + "px")
 			.css("top", y + "px")
 			.css("background-color", color)
-			.css("width", inputCellWidth + "px")
-			.css("height", inputCellHeight + "px")
-			.css("line-height", inputCellHeight + "px")
+			.css("width", (inputCellWidth - 1) + "px")
+			.css("height", (inputCellHeight - 1) + "px")
+			.css("line-height", (inputCellHeight - 1) + "px")
 			.css("text-align", "center")
 			.css("border", "1px solid black");
 			//.bind(touchstart, {"col": col, "row": row}, inputCell_touchstart);
@@ -338,8 +339,8 @@ window.onload = function() {
 	.css("border-style", "solid")
 	.css("border-width", "2px")
 	.css("border-color", "rgb(255, 0, 0)")
-	.css("width", (inputCellWidth - 2) + "px")
-	.css("height", (inputCellHeight - 2) + "px");
+	.css("width", (inputCellWidth - 3) + "px")
+	.css("height", (inputCellHeight - 3) + "px");
 
 	// //カウントダウンを表示
 	// $("#gameScreen").append('<div id="countdownWhite"></div>');
@@ -421,16 +422,17 @@ function gameScreen_touchstart(event) {
 				continuousInputStartCell = null;
 				continuousInputColor = null;
 			}
-		}, 1000);
+		}, continuousInputModeTime);
 	} else {
 		continuousInputModeTimeout = setTimeout(function () {
 			if (startPoint != null && !hasMoved) {
 				isContinuousInputMode = true;
 				continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
-				continuousInputColor = getNextInputColor(input[selectedCell.col][selectedCell.row]);
+				continuousInputColor = input[selectedCell.col][selectedCell.row];
+				deg = 0;
 				updateOverlapCells();
 			}
-		}, 1000);
+		}, continuousInputModeTime);
 	}
 	if (usesMouseEvents) {
 		mouseIsDown = true;
@@ -446,7 +448,7 @@ function gameScreen_touchend(event) {
 	var currentTime = new Date().getTime();
 	clearTimeout(continuousInputModeTimeout);
 	if (!hasMoved) {
-		if (currentTime - startTime < 1000) {
+		if (currentTime - startTime < continuousInputModeTime) {
 			if (isContinuousInputMode) {
 				if (continuousInputStartCell.row == selectedCell.row) {
 					var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
