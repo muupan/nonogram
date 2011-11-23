@@ -4,7 +4,7 @@
 
 //以下設定項目
 const screenWidth = 320;
-const usesMouseEvents = false;
+const usesMouseEvents = true;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -195,172 +195,8 @@ $('<img src="/img/clear.gif">');
 window.onload = function() {
 	setTimeout(doScroll, 100);
 	
-	$("#gameScreen")
-	.css("width", screenWidth + "px")
-	.css("height", screenHeight + "px")
-	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px")
-	.bind(touchstart, gameScreen_touchstart)
-	.bind(touchmove, gameScreen_touchmove)
-	.bind(touchend, gameScreen_touchend);
-
-	//上の数字セル
-	for (var col = 0; col < upNumberColCount; col++) {
-		for (var row = 0; row < upNumberRowCount; row++) {
-			var id = getUpNumberCellId(col, row);
-			var x = upNumberAreaStartX + col * upNumberCellWidth;
-			var y = upNumberAreaStartY + row * upNumberCellHeight;
-			var color;
-			if (col % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
-			var content;
-			if (upNumber[col][row] == 0 && row != upNumberRowCount - 1) {
-				content = "";
-			} else {
-				content = upNumber[col][row];
-			}
-			$("#gameScreen").append('<div id="' + id + '"></div>');
-			$("#" + id)
-			.css("position", "absolute")
-			.css("left", x + "px")
-			.css("top", y + "px")
-			.css("background-color", color)
-			.css("width", upNumberCellWidth + "px")
-			.css("height", upNumberCellHeight + "px")
-			.css("line-height", upNumberCellHeight + "px")
-			.css("text-align", "center")
-			.html(content);
-		}
-	}
-	//左の数字セル
-	for (var col = 0; col < leftNumberColCount; col++) {
-		for (var row = 0; row < leftNumberRowCount; row++) {
-			var id = getLeftNumberCellId(col, row);
-			var x = leftNumberAreaStartX + col * leftNumberCellWidth;
-			var y = leftNumberAreaStartY + row * leftNumberCellHeight;
-			var color;
-			if (row % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
-			var content;
-			if (leftNumber[col][row] == 0 && col != leftNumberColCount - 1) {
-				content = "";
-			} else {
-				content = leftNumber[col][row];
-			}
-			$("#gameScreen").append('<div id="' + id + '"></div>');
-			$("#" + id)
-			.css("position", "absolute")
-			.css("left", x + "px")
-			.css("top", y + "px")
-			.css("background-color", color)
-			.css("width", leftNumberCellWidth + "px")
-			.css("height", leftNumberCellHeight + "px")
-			.css("line-height", leftNumberCellHeight + "px")
-			.css("text-align", "center")
-			.html(content);
-		}
-	}
-	
-	//入力エリア
-	$("#gameScreen").append('<div id="inputArea"></div>');
-	$("#inputArea")
-	.css("position", "absolute")
-	.css("left", inputAreaStartX + "px")
-	.css("top", inputAreaStartY + "px")
-	.css("width", inputAreaWidth + "px");
-	//.bind(touchstart, gameScreen_touchstart)
-	//.bind(touchmove, gameScreen_touchmove);
-	
-
-	//入力セル
-	for (var col = 0; col < inputColCount; col++) {
-		for (var row = 0; row < inputRowCount; row++) {
-			var id = getInputCellId(col, row);
-			var x = col * inputCellWidth;
-			var y = row * inputCellHeight;
-			var color;
-			if (col % 2 == 0 && row % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
-			$("#inputArea").append('<div id="' + id + '"></div>');
-			$("#" + id)
-			.css("position", "absolute")
-			.css("left", x + "px")
-			.css("top", y + "px")
-			.css("background-color", color)
-			.css("width", (inputCellWidth - 2) + "px")
-			.css("height", (inputCellHeight - 2) + "px")
-			.css("line-height", (inputCellHeight - 2) + "px")
-			.css("text-align", "center")
-			.css("border-top", "1px solid rgb(200, 200, 200)")
-			.css("border-right", "1px solid rgb(100, 100, 100)")
-			.css("border-bottom", "1px solid rgb(50, 50, 50)")
-			.css("border-left", "1px solid rgb(150, 150, 150)");
-		}
-	}
-	
-	//選択範囲
-	$("#gameScreen").append('<div id="selectedCol"></div>');
-	$("#selectedCol")
-	.css("position", "absolute")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", upNumberAreaStartY + "px")
-	.css("background-color", selectedColColor)
-	//.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
-	.css("width", (inputCellWidth - 0) + "px")
-	.css("height", (nonogramRect.height - 0) + "px");
-	
-	$("#gameScreen").append('<div id="selectedRow"></div>');
-	$("#selectedRow")
-	.css("position", "absolute")
-	.css("left", leftNumberAreaStartX + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("background-color", selectedRowColor)
-	//.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
-	.css("width", (nonogramRect.width - 0) + "px")
-	.css("height", (inputCellHeight - 0) + "px");
-	
-	$("#gameScreen").append('<div id="selectedCell"></div>');
-	$("#selectedCell")
-	.css("position", "absolute")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("z-index", "1000")
-	.css("background-color", selectedCellColor)
-	.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
-	.css("width", (inputCellWidth - 3) + "px")
-	.css("height", (inputCellHeight - 3) + "px");
-
-	// //カウントダウンを表示
-	// $("#gameScreen").append('<div id="countdownWhite"></div>');
-	// $("#countdownWhite")
-	// .css("position", "relative")
-	// .css("z-index", "1")
-	// .css("height", screenHeight + "px")
-	// .css("width", screenWidth + "px")
-	// .css("background-color", "rgba(255, 255, 255, 0.8)");
-// 
-	// $("#countdownWhite").append('<div id="countdown"></div>');
-	// $("#countdown")
-	// .css("font-size", countdownNumberFontSize + "px")
-	// .css("line-height", mainScreenHeight + "px")
-	// .css("height", mainScreenHeight + "px")
-	// .css("width", screenWidth + "px")
-	// .html(countdownNumber);
-	// countdownTimerId = setInterval("countdown_tick()", 1000);
+	initGameScreen();
+	initNonogram();
 
 	//ボトムエリア
 	$("#gameScreen").append('<div id="bottomArea"></div>');
@@ -406,7 +242,6 @@ window.onload = function() {
 	//ギブアップボタン
 	$("#buttonArea").append('<input type="button" id="giveupButton" name="giveupButton" value="ギブアップする" />');
 	$("#giveupButton").bind("click", giveupButton_click);
-
 }
 
 function backupInput() {
@@ -423,6 +258,181 @@ function backupInput() {
 		}
 	}
 	inputHistory.push(backup);
+}
+
+function initGameScreen() {
+	$("#gameScreen")
+	.css("width", screenWidth + "px")
+	.css("height", screenHeight + "px")
+	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
+}
+
+function initNonogram() {
+	createNonogram();
+	createUpNumberCells();
+	createLeftNumberCells();
+	createInputArea();
+	createInputCells();
+	createSelection();
+}
+
+function createNonogram() {
+	$("#gameScreen").append('<div id="nonogram"></div>');
+	$("#nonogram")
+	.css("width", nonogramRect.width)
+	.css("height", nonogramRect.height)
+	.bind(touchstart, gameScreen_touchstart)
+	.bind(touchmove, gameScreen_touchmove)
+	.bind(touchend, gameScreen_touchend);
+}
+
+function createUpNumberCells() {
+	//上の数字セル
+	for (var col = 0; col < upNumberColCount; col++) {
+		for (var row = 0; row < upNumberRowCount; row++) {
+			var id = getUpNumberCellId(col, row);
+			var x = upNumberAreaStartX + col * upNumberCellWidth;
+			var y = upNumberAreaStartY + row * upNumberCellHeight;
+			var color;
+			if (col % 2 == 0) {
+				color = "#FFFFFF";
+			} else {
+				color = "#EEEEEE";
+			}
+			var content;
+			if (upNumber[col][row] == 0 && row != upNumberRowCount - 1) {
+				content = "";
+			} else {
+				content = upNumber[col][row];
+			}
+			$("#nonogram").append('<div id="' + id + '"></div>');
+			$("#" + id)
+			.css("position", "absolute")
+			.css("left", x + "px")
+			.css("top", y + "px")
+			.css("background-color", color)
+			.css("width", upNumberCellWidth + "px")
+			.css("height", upNumberCellHeight + "px")
+			.css("line-height", upNumberCellHeight + "px")
+			.css("text-align", "center")
+			.html(content);
+		}
+	}
+}
+
+function createLeftNumberCells() {
+	//左の数字セル
+	for (var col = 0; col < leftNumberColCount; col++) {
+		for (var row = 0; row < leftNumberRowCount; row++) {
+			var id = getLeftNumberCellId(col, row);
+			var x = leftNumberAreaStartX + col * leftNumberCellWidth;
+			var y = leftNumberAreaStartY + row * leftNumberCellHeight;
+			var color;
+			if (row % 2 == 0) {
+				color = "#FFFFFF";
+			} else {
+				color = "#EEEEEE";
+			}
+			var content;
+			if (leftNumber[col][row] == 0 && col != leftNumberColCount - 1) {
+				content = "";
+			} else {
+				content = leftNumber[col][row];
+			}
+			$("#nonogram").append('<div id="' + id + '"></div>');
+			$("#" + id)
+			.css("position", "absolute")
+			.css("left", x + "px")
+			.css("top", y + "px")
+			.css("background-color", color)
+			.css("width", leftNumberCellWidth + "px")
+			.css("height", leftNumberCellHeight + "px")
+			.css("line-height", leftNumberCellHeight + "px")
+			.css("text-align", "center")
+			.html(content);
+		}
+	}
+}
+
+function createInputArea() {
+	//入力エリア
+	$("#nonogram").append('<div id="inputArea"></div>');
+	$("#inputArea")
+	.css("position", "absolute")
+	.css("left", inputAreaStartX + "px")
+	.css("top", inputAreaStartY + "px")
+	.css("width", inputAreaWidth + "px");
+}
+
+function createInputCells() {
+	//入力セル
+	for (var col = 0; col < inputColCount; col++) {
+		for (var row = 0; row < inputRowCount; row++) {
+			var id = getInputCellId(col, row);
+			var x = col * inputCellWidth;
+			var y = row * inputCellHeight;
+			var color;
+			if (col % 2 == 0 && row % 2 == 0) {
+				color = "#FFFFFF";
+			} else {
+				color = "#EEEEEE";
+			}
+			$("#inputArea").append('<div id="' + id + '"></div>');
+			$("#" + id)
+			.css("position", "absolute")
+			.css("left", x + "px")
+			.css("top", y + "px")
+			.css("background-color", color)
+			.css("width", (inputCellWidth - 2) + "px")
+			.css("height", (inputCellHeight - 2) + "px")
+			.css("line-height", (inputCellHeight - 2) + "px")
+			.css("text-align", "center")
+			.css("border-top", "1px solid rgb(200, 200, 200)")
+			.css("border-right", "1px solid rgb(100, 100, 100)")
+			.css("border-bottom", "1px solid rgb(50, 50, 50)")
+			.css("border-left", "1px solid rgb(150, 150, 150)");
+		}
+	}
+}
+
+function createSelection() {
+	//選択範囲
+	$("#nonogram").append('<div id="selectedCol"></div>');
+	$("#selectedCol")
+	.css("position", "absolute")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", upNumberAreaStartY + "px")
+	.css("background-color", selectedColColor)
+	//.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (inputCellWidth - 0) + "px")
+	.css("height", (nonogramRect.height - 0) + "px");
+	
+	$("#nonogram").append('<div id="selectedRow"></div>');
+	$("#selectedRow")
+	.css("position", "absolute")
+	.css("left", leftNumberAreaStartX + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("background-color", selectedRowColor)
+	//.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (nonogramRect.width - 0) + "px")
+	.css("height", (inputCellHeight - 0) + "px");
+	
+	$("#nonogram").append('<div id="selectedCell"></div>');
+	$("#selectedCell")
+	.css("position", "absolute")
+	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
+	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
+	.css("z-index", "1000")
+	.css("background-color", selectedCellColor)
+	.css("border-style", "solid")
+	.css("border-width", "2px")
+	.css("border-color", "rgb(255, 0, 0)")
+	.css("width", (inputCellWidth - 3) + "px")
+	.css("height", (inputCellHeight - 3) + "px");
 }
 
 function restoreInput() {
@@ -577,7 +587,7 @@ function deleteOverlapCell(col, row) {
 function createOverlapCell(col, row, color) {
 	var id = getOverlapCellId(col, row);
 	//salert("create");
-	$("#gameScreen").append('<div id="' + id + '"></div>');
+	$("#nonogram").append('<div id="' + id + '"></div>');
 	$("#" + id)
 	.css("position", "absolute")
 	.css("left", (inputAreaStartX + col * inputCellWidth + 3) + "px")
