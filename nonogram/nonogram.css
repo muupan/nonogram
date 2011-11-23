@@ -1,3 +1,7 @@
+body {
+	margin: 0px;
+}
+
 div.inputCell {
 	position: absolute;
 	border-top: 1px solid rgb(200, 200, 200);
@@ -54,4 +58,12 @@ div.overlapCell.black {
 
 div.overlapCell.cross {
 	background-color: rgba(255, 255, 255, 0.8);
+}
+
+div#upNumberArea {
+	position: absolute;
+}
+
+div#leftNumberArea {
+	position: absolute;
 }

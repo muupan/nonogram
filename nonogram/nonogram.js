@@ -4,7 +4,7 @@
 
 //以下設定項目
 const screenWidth = 320;
-const usesMouseEvents = true;
+const usesMouseEvents = false;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -64,49 +64,43 @@ const STATUS_WHITE = 0;
 const STATUS_BLACK = 1;
 const STATUS_CROSS = 2;
 
-var upNumberColCount = inputColCount;
-var upNumberRowCount = Math.ceil(inputRowCount / 2);
-var leftNumberColCount = Math.ceil(inputColCount / 2);
-var leftNumberRowCount = inputRowCount;
+const upNumberColCount = inputColCount;
+const upNumberRowCount = Math.ceil(inputRowCount / 2);
+const leftNumberColCount = Math.ceil(inputColCount / 2);
+const leftNumberRowCount = inputRowCount;
 
-var inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * (2 / 3)));
-var inputCellHeight = inputCellWidth;
-var upNumberCellWidth = inputCellWidth;
-var upNumberCellHeight = Math.floor(inputCellHeight * (2 / 3));
-var leftNumberCellWidth = Math.floor(inputCellWidth * (2 / 3));
-var leftNumberCellHeight = inputCellHeight;
+const inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * (2 / 3)));
+const inputCellHeight = inputCellWidth;
+const upNumberCellWidth = inputCellWidth;
+const upNumberCellHeight = Math.floor(inputCellHeight * (2 / 3));
+const leftNumberCellWidth = Math.floor(inputCellWidth * (2 / 3));
+const leftNumberCellHeight = inputCellHeight;
 
-// var logoAreaStartX = marginLeft;
-// var logoAreaStartY = marginTop;
-// var logoAreaWidth = leftNumberCellWidth * leftNumberColCount;
-// var logoAreaHeight = upNumberCellHeight * upNumberRowCount;
+const upNumberAreaStartX = marginLeft + leftNumberCellWidth * leftNumberColCount + marginLeftOfInputArea;
+const upNumberAreaStartY = marginTop;
+const leftNumberAreaStartX = marginLeft;
+const leftNumberAreaStartY = marginTop + upNumberCellHeight * upNumberRowCount + marginTopOfInputArea;
 
-var upNumberAreaRect = new Rect()
+const inputAreaStartX = upNumberAreaStartX;
+const inputAreaStartY = leftNumberAreaStartY;
+const inputAreaWidth = inputCellWidth * inputColCount;
+const inputAreaHeight = inputCellHeight * inputRowCount;
 
-var upNumberAreaStartX = marginLeft + leftNumberCellWidth * leftNumberColCount + marginLeftOfInputArea;
-var upNumberAreaStartY = marginTop;
-var leftNumberAreaStartX = marginLeft;
-var leftNumberAreaStartY = marginTop + upNumberCellHeight * upNumberRowCount + marginTopOfInputArea;
+const bottomAreaHeight = inputCellHeight;
+const bottomAreaWidth = screenWidth - marginLeft - marginRight;
+const bottomAreaStartX = marginLeft;
+const bottomAreaStartY = inputAreaStartY + inputAreaHeight + marginBetweenInputAreaAndBottomArea;
 
-var inputAreaStartX = upNumberAreaStartX;
-var inputAreaStartY = leftNumberAreaStartY;
-var inputAreaWidth = inputCellWidth * inputColCount;
-var inputAreaHeight = inputCellHeight * inputRowCount;
+const mainScreenHeight = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
 
-var bottomAreaHeight = inputCellHeight;
-var bottomAreaWidth = screenWidth - marginLeft - marginRight;
-var bottomAreaStartX = marginLeft;
-var bottomAreaStartY = inputAreaStartY + inputAreaHeight + marginBetweenInputAreaAndBottomArea;
+const buttonAreaHeight = Math.floor(mainScreenHeight / 2);
+const buttonAreaWidth = screenWidth - marginLeft - marginRight;
+const buttonAreaStartX = marginLeft;
+const buttonAreaStartY = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
 
-var mainScreenHeight = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
+const screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
 
-var buttonAreaHeight = Math.floor(mainScreenHeight / 2);
-var buttonAreaWidth = screenWidth - marginLeft - marginRight;
-var buttonAreaStartX = marginLeft;
-var buttonAreaStartY = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
-
-var screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
-
+//入力ステータス
 var input = new Array(inputColCount);
 for (var col = 0; col < inputColCount; col++) {
 	input[col] = new Array(inputRowCount);
@@ -114,10 +108,12 @@ for (var col = 0; col < inputColCount; col++) {
 		input[col][row] = 0;
 	}
 }
+//入力ヒストリー
 var inputHistoryCount = 0;
 var inputHistory = new Array();
 backupInput();
 
+//正解チェック
 var upNumberColCorrectness = new Array(upNumberColCount);
 var leftNumberRowCorrectness = new Array(leftNumberRowCount);
 for (var col = 0; col < inputColCount; col++) {
@@ -127,7 +123,6 @@ for (var row = 0; row < inputRowCount; row++) {
 	checkRow(row);
 }
 checkColAndRowCorrectness();
-
 
 var lastTouchedInputCellCol = -1;
 var lastTouchedInputCellRow = -1;
@@ -152,41 +147,19 @@ usedItems["3"] = 0;
 
 var selectedCell = new Cell(0, 0);
 
-var nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
+const nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
 
 var startPoint = null;
 var startCell = null;
 var startTime = null;
 var hasMoved = false;
 
+//連続入力モード
 var isContinuousInputMode = false;
 var continuousInputStartCell = null;
 var continuousInputColor = null;
-//color 0:white 1:black 2:batsu
-
 var continuousInputModeTimeout = null;
-/*
-var deg = 0;
-var animationTimerId = setInterval(function () {
-	if (isContinuousInputMode) {
-		deg += 10;
-		if (deg >= 360) {
-			deg -= 360;
-		}
-		var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
-		var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
-		var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
-		var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
-		for (var col = fromCol; col <= toCol; col++) {
-			for (var row = fromRow; row <= toRow; row++) {
-				$("#" + getOverlapCellId(col, row))
-				.css("-webkit-transform", "rotate(" + deg + "deg)")
-				.css("-moz-transform", "rotate(" + deg + "deg)");
-			}	
-		}
-	}
-}, 50);
-*/
+
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
 
@@ -209,7 +182,7 @@ window.onload = function() {
 	.css("height", bottomAreaHeight + "px")
 	.css("text-align", "right")
 	.css("line-height", bottomAreaHeight + "px");
-
+/*
 	//タイマー
 	$("#bottomArea").append('<div id="timer"></div>');
 	$("#timer")
@@ -243,6 +216,7 @@ window.onload = function() {
 	//ギブアップボタン
 	$("#buttonArea").append('<input type="button" id="giveupButton" name="giveupButton" value="ギブアップする" />');
 	$("#giveupButton").bind("click", giveupButton_click);
+	*/
 }
 
 function backupInput() {
@@ -285,6 +259,14 @@ function createNonogram() {
 	.bind(touchstart, gameScreen_touchstart)
 	.bind(touchmove, gameScreen_touchmove)
 	.bind(touchend, gameScreen_touchend);
+}
+
+function createUpNumberArea() {
+	$('<div id="upNumberArea"></div>')
+	.appendTo("#nonogram")
+	.css("left", inputAreaStartX + "px")
+	.css("top", inputAreaStartY + "px")
+	.css("width", inputAreaWidth + "px");
 }
 
 function createUpNumberCells() {
@@ -399,14 +381,14 @@ function createSelection() {
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("width", (nonogramRect.width - 0) + "px")
-	.css("height", (inputCellHeight - 0) + "px");
+	.css("height", (inputCellHeight) + "px");
 	//選択セル
 	$('<div id="selectedCell"></div>')
 	.appendTo("#nonogram")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("width", (inputCellWidth - 3) + "px")
-	.css("height", (inputCellHeight - 3) + "px");
+	.css("width", (inputCellWidth - 4) + "px")
+	.css("height", (inputCellHeight - 4) + "px");
 }
 
 function restoreInput() {
@@ -559,8 +541,8 @@ function createOverlapCell(col, row, color) {
 	.addClass("overlapCell")
 	.css("left", (inputAreaStartX + col * inputCellWidth + 3) + "px")
 	.css("top", (inputAreaStartY + row * inputCellHeight + 3) + "px")
-	.css("width", (inputCellWidth - 7) + "px")
-	.css("height", (inputCellHeight - 7) + "px");
+	.css("width", (inputCellWidth - 8) + "px")
+	.css("height", (inputCellHeight - 8) + "px");
 	switch (color) {
 	case STATUS_WHITE:
 		$("#" + id).addClass("white");
@@ -580,9 +562,9 @@ function createOverlapCell(col, row, color) {
 			ctx.strokeStyle = "rgba(127, 127, 127, 0.8)";
 			ctx.beginPath();
 			ctx.moveTo(0, 0);
-			ctx.lineTo(inputCellWidth - 7, inputCellHeight - 7);
-			ctx.moveTo(0, inputCellHeight - 7);
-			ctx.lineTo(inputCellWidth - 7, 0);
+			ctx.lineTo(inputCellWidth - 8, inputCellHeight - 8);
+			ctx.moveTo(0, inputCellHeight - 8);
+			ctx.lineTo(inputCellWidth - 8, 0);
 			ctx.closePath();
 			ctx.stroke();
 		}
@@ -741,75 +723,7 @@ function setInputCellStatus(cell, status) {
 		checkColAndRow(cell.col, cell.row);
 	}
 }
-/*
-// セルを黒に
-function black(col, row) {
-	var oldStatus = input[col][row];
-	input[col][row] = 1;
-	lastInput = 1;
-	var id = getInputCellId(col, row);
-	$("#" + id).removeClass()
-	document.getElementById(id).style.backgroundColor = "#000000";
-	document.getElementById(id).innerHTML = "";
-	lastTouchedInputCellCol = col;
-	lastTouchedInputCellRow = row;
-	checkColAndRow(col, row);
-}
 
-// セルを×に
-function batsu(col, row) {
-	input[col][row] = 2;
-	lastInput = 2;
-	var id = getInputCellId(col, row);
-	var color;
-	if (col % 2 == 0 && row % 2 == 0) {
-		color = "#FFFFFF";
-	} else {
-		color = "#EEEEEE";
-	}
-	document.getElementById(id).style.backgroundColor = color;
-
-	//Canvasを使って×を描く
-	$("#" + id).html('<canvas id="' + id + '_batsu" width="' + inputCellWidth + '" height="' + inputCellHeight + '">×</canvas>');
-	var canvas = document.getElementById(id + '_batsu');
-	//Canvas要素の対応チェック
-	if (canvas && canvas.getContext) {
-		var ctx = canvas.getContext('2d');
-		ctx.lineWidth = 1;
-		ctx.strokeStyle = "rgba(0, 0, 0)";
-		ctx.beginPath();
-		ctx.moveTo(3, 3);
-		ctx.lineTo(inputCellWidth - 5, inputCellHeight - 5);
-		ctx.moveTo(3, inputCellHeight - 5);
-		ctx.lineTo(inputCellWidth - 5, 3);
-		ctx.closePath();
-		ctx.stroke();
-	}
-
-	lastTouchedInputCellCol = col;
-	lastTouchedInputCellRow = row;
-	checkColAndRow(col, row);
-}
-
-// セルを白に
-function white(col, row) {
-	input[col][row] = 0;
-	lastInput = 0;
-	var id = getInputCellId(col, row);
-	var color;
-	if (col % 2 == 0 && row % 2 == 0) {
-		color = "#FFFFFF";
-	} else {
-		color = "#EEEEEE";
-	}
-	document.getElementById(id).style.backgroundColor = color;
-
-	document.getElementById(id).innerHTML = "";
-
-	lastTouchedInputCellCol = col;
-	lastTouchedInputCellRow = row;
-}
-*/
 function getInputCellId(col, row) {
 	return "inputCell_" + col + "_" + row;
 }
