@@ -60,6 +60,10 @@ var Margin = function(top, right, bottom, left) {
 	this.left = left;
 }
 
+const STATUS_WHITE = 0;
+const STATUS_BLACK = 1;
+const STATUS_CROSS = 2;
+
 var upNumberColCount = inputColCount;
 var upNumberRowCount = Math.ceil(inputRowCount / 2);
 var leftNumberColCount = Math.ceil(inputColCount / 2);
@@ -147,9 +151,6 @@ usedItems["2"] = 0;
 usedItems["3"] = 0;
 
 var selectedCell = new Cell(0, 0);
-var selectedColColor = "rgba(255, 0, 0, 0.2)";
-var selectedRowColor = "rgba(255, 0, 0, 0.2)";
-var selectedCellColor = "rgba(255, 0, 0, 0.2)";
 
 var nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
 
@@ -371,66 +372,39 @@ function createInputCells() {
 			var id = getInputCellId(col, row);
 			var x = col * inputCellWidth;
 			var y = row * inputCellHeight;
-			var color;
-			if (col % 2 == 0 && row % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
-			$("#inputArea").append('<div id="' + id + '"></div>');
-			$("#" + id)
+			$('<div id="' + id + '"></div>')
+			.appendTo("#inputArea")
+			.addClass("inputCell")
+			.addClass("white")
 			.css("position", "absolute")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("background-color", color)
 			.css("width", (inputCellWidth - 2) + "px")
-			.css("height", (inputCellHeight - 2) + "px")
-			.css("line-height", (inputCellHeight - 2) + "px")
-			.css("text-align", "center")
-			.css("border-top", "1px solid rgb(200, 200, 200)")
-			.css("border-right", "1px solid rgb(100, 100, 100)")
-			.css("border-bottom", "1px solid rgb(50, 50, 50)")
-			.css("border-left", "1px solid rgb(150, 150, 150)");
+			.css("height", (inputCellHeight - 2) + "px");
 		}
 	}
 }
 
 function createSelection() {
-	//選択範囲
-	$("#nonogram").append('<div id="selectedCol"></div>');
-	$("#selectedCol")
-	.css("position", "absolute")
+	//選択列
+	$('<div id="selectedCol"></div>')
+	.appendTo("#nonogram")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", upNumberAreaStartY + "px")
-	.css("background-color", selectedColColor)
-	//.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
 	.css("width", (inputCellWidth - 0) + "px")
 	.css("height", (nonogramRect.height - 0) + "px");
-	
-	$("#nonogram").append('<div id="selectedRow"></div>');
-	$("#selectedRow")
-	.css("position", "absolute")
+	//選択行
+	$('<div id="selectedRow"></div>')
+	.appendTo("#nonogram")
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("background-color", selectedRowColor)
-	//.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
 	.css("width", (nonogramRect.width - 0) + "px")
 	.css("height", (inputCellHeight - 0) + "px");
-	
-	$("#nonogram").append('<div id="selectedCell"></div>');
-	$("#selectedCell")
-	.css("position", "absolute")
+	//選択セル
+	$('<div id="selectedCell"></div>')
+	.appendTo("#nonogram")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("z-index", "1000")
-	.css("background-color", selectedCellColor)
-	.css("border-style", "solid")
-	.css("border-width", "2px")
-	.css("border-color", "rgb(255, 0, 0)")
 	.css("width", (inputCellWidth - 3) + "px")
 	.css("height", (inputCellHeight - 3) + "px");
 }
@@ -516,17 +490,7 @@ function gameScreen_touchend(event) {
 }
 
 function changeSelectedCellColor() {
-	switch (input[selectedCell.col][selectedCell.row]) {
-	case 0:
-		black(selectedCell.col, selectedCell.row);
-		break;
-	case 1:
-		batsu(selectedCell.col, selectedCell.row);
-		break;
-	case 2:
-		white(selectedCell.col, selectedCell.row);
-		break;
-	}
+	setInputCellStatus(selectedCell, getNextInputColor(input[selectedCell.col][selectedCell.row]));
 }
 
 function updateSelection(newCell) {
@@ -584,31 +548,31 @@ function deleteOverlapCell(col, row) {
 	$("#" + getOverlapCellId(col, row)).remove();
 }
 
+function createOverlapCellCanvasId(cell) {
+	return "overlapCellCanvas_" + cell.col + "_" + cell.row;
+}
+
 function createOverlapCell(col, row, color) {
 	var id = getOverlapCellId(col, row);
-	//salert("create");
-	$("#nonogram").append('<div id="' + id + '"></div>');
-	$("#" + id)
-	.css("position", "absolute")
+	$('<div id="' + id + '"></div>')
+	.appendTo("#nonogram")
+	.addClass("overlapCell")
 	.css("left", (inputAreaStartX + col * inputCellWidth + 3) + "px")
 	.css("top", (inputAreaStartY + row * inputCellHeight + 3) + "px")
 	.css("width", (inputCellWidth - 7) + "px")
-	.css("height", (inputCellHeight - 7) + "px")
-	.css("line-height", inputCellHeight + "px")
-	.css("border", "solid 1px rgba(127, 127, 127, 0.8)")
-	.css("text-align", "center");
+	.css("height", (inputCellHeight - 7) + "px");
 	switch (color) {
-	case 0:
-		$("#" + id).css("background-color", "rgba(255, 255, 255, 0.8)");
+	case STATUS_WHITE:
+		$("#" + id).addClass("white");
 		break;
-	case 1:
-		$("#" + id).css("background-color", "rgba(127, 127, 127, 0.8)");
+	case STATUS_BLACK:
+		$("#" + id).addClass("black");
 		break;
-	case 2:
-		$("#" + id)
-		.css("background-color", "rgba(255, 255, 255, 0.8)")
-		.html('<canvas id="' + id + '_batsu" width="' + (inputCellWidth - 7) + '" height="' + (inputCellHeight - 7) + '">×</canvas>');
-		var canvas = document.getElementById(id + '_batsu');
+	case STATUS_CROSS:
+		$("#" + id).addClass("cross");
+		var canvasId = createOverlapCellCanvasId(new Cell(col, row));
+		$("#" + id).append('<canvas id="' + canvasId + '" width="' + (inputCellWidth - 7) + '" height="' + (inputCellHeight - 7) + '"></canvas>');
+		var canvas = $("#" + canvasId).get(0);
 		//Canvas要素の対応チェック
 		if (canvas && canvas.getContext) {
 			var ctx = canvas.getContext('2d');
@@ -707,6 +671,8 @@ function getNextInputColor(color) {
 }
 
 function setInputCellColor(col, row, color) {
+	setInputCellStatus(new Cell(col, row), color);
+	/*
 	switch (color) {
 	case 0:
 		white(col, row);
@@ -718,13 +684,71 @@ function setInputCellColor(col, row, color) {
 		batsu(col, row);
 		break;
 	}
+	*/
 }
 
+function createInputCellCanvasId(cell) {
+	return "inputCellCanvas_" + cell.col + "_" + cell.row;
+}
+
+function setInputCellStatus(cell, status) {
+	var oldStatus = input[cell.col][cell.row];
+	console.log("oldStatus:" + oldStatus + " newStatus:" + status);
+	var id = getInputCellId(cell.col, cell.row);
+	if (oldStatus != status) {
+		switch (oldStatus) {
+		case STATUS_WHITE:
+			$("#" + id).removeClass("white");
+			break;
+		case STATUS_BLACK:
+			$("#" + id).removeClass("black");
+			break;
+		case STATUS_CROSS:
+			$("#" + id).removeClass("cross");
+			//canvas要素を消す
+			$("#" + createInputCellCanvasId(cell)).remove();
+			break;
+		}
+		switch (status) {
+		case STATUS_WHITE:
+			$("#" + id).addClass("white");
+			break;
+		case STATUS_BLACK:
+			$("#" + id).addClass("black");
+			break;
+		case STATUS_CROSS:
+			$("#" + id).addClass("cross");
+			//canvas要素でxを書く
+			var canvasId = createInputCellCanvasId(cell);
+			$("#" + id).append('<canvas id="' + canvasId + '" width="' + inputCellWidth + '" height="' + inputCellHeight + '"></canvas>');
+			var canvas = $("#" + canvasId).get(0);
+			//Canvas要素の対応チェック
+			if (canvas && canvas.getContext) {
+				var ctx = canvas.getContext('2d');
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = "rgba(0, 0, 0)";
+				ctx.beginPath();
+				ctx.moveTo(3, 3);
+				ctx.lineTo(inputCellWidth - 5, inputCellHeight - 5);
+				ctx.moveTo(3, inputCellHeight - 5);
+				ctx.lineTo(inputCellWidth - 5, 3);
+				ctx.closePath();
+				ctx.stroke();
+			}
+			break;
+		}
+		input[cell.col][cell.row] = status;
+		checkColAndRow(cell.col, cell.row);
+	}
+}
+/*
 // セルを黒に
 function black(col, row) {
+	var oldStatus = input[col][row];
 	input[col][row] = 1;
 	lastInput = 1;
 	var id = getInputCellId(col, row);
+	$("#" + id).removeClass()
 	document.getElementById(id).style.backgroundColor = "#000000";
 	document.getElementById(id).innerHTML = "";
 	lastTouchedInputCellCol = col;
@@ -785,7 +809,7 @@ function white(col, row) {
 	lastTouchedInputCellCol = col;
 	lastTouchedInputCellRow = row;
 }
-
+*/
 function getInputCellId(col, row) {
 	return "inputCell_" + col + "_" + row;
 }

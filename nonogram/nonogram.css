@@ -1,0 +1,57 @@
+div.inputCell {
+	position: absolute;
+	border-top: 1px solid rgb(200, 200, 200);
+	border-right: 1px solid rgb(100, 100, 100);
+	border-bottom: 1px solid rgb(50, 50, 50);
+	border-left: 1px solid rgb(150, 150, 150);
+}
+
+div.inputCell.white {
+	background-color: rgb(255, 255, 255);
+}
+
+div.inputCell.black {
+	background-color: rgb(0, 0, 0);
+}
+
+div.inputCell.cross {
+	background-color: rgb(255, 255, 255);
+}
+
+div#selectedCol {
+	position: absolute;
+	background-color: rgba(255, 0, 0, 0.2);
+}
+
+div#selectedRow {
+	position: absolute;
+	background-color: rgba(255, 0, 0, 0.2);
+}
+
+div#selectedCell {
+	position: absolute;
+	background-color: rgba(255, 0, 0, 0.2);
+	z-index: 1000;
+	border-style: solid;
+	border-width: 2px;
+	border-color: rgb(255, 0, 0);
+}
+
+div.overlapCell {
+	position: absolute;
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(127, 127, 127);
+}
+
+div.overlapCell.white {
+	background-color: rgba(255, 255, 255, 0.8);
+}
+
+div.overlapCell.black {
+	background-color: rgba(127, 127, 127, 0.8);
+}
+
+div.overlapCell.cross {
+	background-color: rgba(255, 255, 255, 0.8);
+}
