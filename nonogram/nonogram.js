@@ -3,7 +3,7 @@
  */
 
 //以下設定項目
-const usesMouseEvents = false;
+const usesMouseEvents = true;
 const screenWidth = 320;
 const screenHeight = 480;
 const marginLeft = 10;
@@ -165,8 +165,6 @@ var isContinuousInputMode = false;
 var continuousInputStartCell = null;
 var continuousInputColor = null;
 var continuousInputModeTimeout = null;
-
-var undoIsDisabled = true;
 
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
@@ -910,8 +908,20 @@ function getTimeSpanString(s) {
 	return result;
 }
 
+var opacity = 0.8;
+
 //クリア画面を表示
 function clear() {
+	var timerId = setInterval(function () {
+		$("#upNumberArea").css("opacity", opacity);
+		$("#leftNumberArea").css("opacity", opacity);
+		$("#selectedCol").css("opacity", opacity);
+		$("#selectedRow").css("opacity", opacity);
+		$("#selectedCell").css("opacity", opacity);
+		opacity -= 0.2;
+	}, 200);
+	
+	/*
 	//操作不可
 	isPlaying = false;
 	//タイマーを止める
@@ -943,6 +953,7 @@ function clear() {
 	.append('<input type="button" id="clearButton" name="clearButton" value="結果をみる" />');
 
 	$("#clearButton").bind("click", clearButton_click);
+	*/
 }
 
 //アイテムボタンのクリックイベント
