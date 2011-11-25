@@ -171,7 +171,6 @@ window.onload = function() {
 	
 	initGameScreen();
 	initNonogram();
-
 	//ボトムエリア
 	$("#gameScreen").append('<div id="bottomArea"></div>');
 	$("#bottomArea")
@@ -182,7 +181,11 @@ window.onload = function() {
 	.css("height", bottomAreaHeight + "px")
 	.css("text-align", "right")
 	.css("line-height", bottomAreaHeight + "px");
-/*
+	
+	$('<a class="button">Undo</a>')
+	.appendTo("#bottomArea");
+	
+	/*
 	//タイマー
 	$("#bottomArea").append('<div id="timer"></div>');
 	$("#timer")

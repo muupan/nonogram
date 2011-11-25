@@ -68,15 +68,15 @@ div.overlapCell {
 }
 
 div.overlapCell.white {
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: rgba(255, 255, 255, 0.7);
 }
 
 div.overlapCell.black {
-	background-color: rgba(127, 127, 127, 0.8);
+	background-color: rgba(127, 127, 127, 0.7);
 }
 
 div.overlapCell.cross {
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: rgba(255, 255, 255, 0.7);
 }
 
 div#upNumberArea {
@@ -85,4 +85,21 @@ div#upNumberArea {
 
 div#leftNumberArea {
 	position: absolute;
+}
+
+a.button {
+	border-top: 1px solid rgb(200, 200, 200);
+	border-right: 1px solid rgb(100, 100, 100);
+	border-bottom: 1px solid rgb(50, 50, 50);
+	border-left: 1px solid rgb(150, 150, 150);
+	padding: 5px 20px;
+	font-weight: bold;
+	cursor: pointer;
+	color: #666;
+	background-color: rgba(255, 255, 255, 0.7);
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	text-shadow: 0 -1px 1px #FFF, -1px 0 1px #FFF, 1px 0 1px #aaa;
+	-webkit-box-shadow: 1px 1px 2px #E7E7E7;
+	-moz-box-shadow: 1px 1px 2px #E7E7E7; 
 }
