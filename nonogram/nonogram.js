@@ -3,7 +3,7 @@
  */
 
 //以下設定項目
-const usesMouseEvents = false;
+const usesMouseEvents = true;
 const screenWidth = 320;
 const screenHeight = 480;
 const marginLeft = 10;
@@ -135,27 +135,10 @@ for (var row = 0; row < inputRowCount; row++) {
 }
 checkColAndRowCorrectness();
 
-var lastTouchedInputCellCol = -1;
-var lastTouchedInputCellRow = -1;
-var lastInput = -1;
-
 //プレイ中（操作可能）かどうか
 var isPlaying = true;
 
-var countdownNumber = 3;
-var countdownNumberFontSize = Math.floor(mainScreenHeight / 3);
-var countdownTimerId = -1;
-
-var timerStartTime = -1;
-var timerSecond = 0;
-var timerFontSize = inputCellWidth;
-var timerTimerId = -1;
-
-var usedItems = {};
-usedItems["1"] = 0;
-usedItems["2"] = 0;
-usedItems["3"] = 0;
-
+//選択中のセル
 var selectedCell = new Cell(0, 0);
 
 const nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
@@ -179,12 +162,19 @@ $('<img src="/img/clear.gif">');
 // ===============================================
 window.onload = function() {
 	setTimeout(doScroll, 100);
-	
 	initGameScreen();
 	initNonogram();
-	//ボトムエリア
-	$("#gameScreen").append('<div id="bottomArea"></div>');
-	$("#bottomArea")
+	initBottomArea();
+}
+
+function initBottomArea() {
+	createBottomArea();
+	createUndoButton();
+}
+
+function createBottomArea() {
+	$('<div id="bottomArea"></div>')
+	.appendTo("#gameScreen")
 	.css("position", "absolute")
 	.css("top", bottomAreaStartY + "px")
 	.css("left", bottomAreaStartX + "px")
@@ -192,47 +182,13 @@ window.onload = function() {
 	.css("height", bottomAreaHeight + "px")
 	.css("text-align", "right")
 	.css("line-height", bottomAreaHeight + "px");
-	
+}
+
+function createUndoButton() {
 	$('<button id="undoButton">Undo</button>')
 	.appendTo("#bottomArea")
 	.bind(touchstart, preventDefault);
 	disableUndo();
-	
-	/*
-	//タイマー
-	$("#bottomArea").append('<div id="timer"></div>');
-	$("#timer")
-	.css("float", "right")
-	.html(getTimeSpanString(0));
-
-	//ボタンエリア
-	$("#gameScreen").append('<div id="buttonArea"></div>');
-	$("#buttonArea")
-	.css("text-align", "left")
-	.css("position", "absolute")
-	.css("top", buttonAreaStartY + "px")
-	.css("left", buttonAreaStartX + "px")
-	.css("width", buttonAreaWidth + "px")
-	.css("height", buttonAreaHeight + "px");
-
-	//アイテムボタン
-	if (hasItem()) {
-		$("#buttonArea").append('<div id="itemArea"></div>');
-		$("#itemArea").append('以下のアイテムが使用できます');
-		for (var itemId = 1; itemId <= 3; itemId++) {
-			if (userItems[itemId]) {
-				$("#itemArea").append('<div id="item_' + itemId + '"></div>');
-				$("#item_" + itemId).append('<input type="button" id="itemButton_' + itemId + '" name="itemButton_' + itemId + '" value="' + itemName[itemId] + '（×' + userItems[itemId] + '）" />');
-				$("#itemButton_" + itemId).bind('click', {"itemId": itemId}, itemButton_click);
-			}
-		}
-		$("#itemArea").append('<br />');
-	}
-
-	//ギブアップボタン
-	$("#buttonArea").append('<input type="button" id="giveupButton" name="giveupButton" value="ギブアップする" />');
-	$("#giveupButton").bind("click", giveupButton_click);
-	*/
 }
 
 function backupInput() {
@@ -688,19 +644,6 @@ function getNextInputColor(color) {
 
 function setInputCellColor(col, row, color) {
 	setInputCellStatus(new Cell(col, row), color);
-	/*
-	switch (color) {
-	case 0:
-		white(col, row);
-		break;
-	case 1:
-		black(col, row);
-		break;
-	case 2:
-		batsu(col, row);
-		break;
-	}
-	*/
 }
 
 function createInputCellCanvasId(cell) {
@@ -772,39 +715,6 @@ function getUpNumberCellId(col, row) {
 
 function getLeftNumberCellId(col, row) {
 	return "leftNumberCell_" + col + "_" + row;
-}
-
-function countdown_tick() {
-	if (countdownNumber > 1) {
-		countdownNumber--;
-		$("#countdown").html(countdownNumber);
-	} else {
-		clearInterval(countdownTimerId);
-		$("#countdown").css("font-size", countdownNumberFontSize / 2 + "px");
-		$("#countdown").html("スタート");
-		isPlaying = true;
-		startTimer();
-		$("#countdownWhite").fadeOut(500, countdownWhite_end);
-	}
-}
-
-function countdownWhite_end() {
-	$("#countdownWhite").remove();
-}
-
-function startTimer() {
-	timerStartTime = new Date().getTime();
-	//0.1秒に一回チェック
-	timerTimerId = setInterval("timer_tick()", 100);
-}
-
-function stopTimer() {
-	clearInterval(timerTimerId);
-}
-
-function timer_tick() {
-	timerSecond = Math.floor((new Date().getTime() - timerStartTime) / 1000);
-	$("#timer").html(getTimeSpanString(timerSecond));
 }
 
 //列の正しさチェック
@@ -894,25 +804,6 @@ function checkColAndRowCorrectness() {
 	clear();
 }
 
-//秒を00分00秒に変換（99分99秒まで）
-function getTimeSpanString(s) {
-	var result = "";
-	if (s >= 5999) {
-		result = "99分99秒";
-	} else {
-		var minute = Math.floor(s / 60);
-		var second = s % 60;
-		if (minute > 0) {
-			result += minute + "分";
-			if (second < 10) {
-				result += "0";
-			}
-		}
-		result += second + "秒";
-	}
-	return result;
-}
-
 var currentframe = 0;
 
 //クリア画面を表示
@@ -980,154 +871,11 @@ function clear() {
 		}
 		currentframe++;
 	}, 100);
-	
-	/*
-	//操作不可
-	isPlaying = false;
-	//タイマーを止める
-	stopTimer();
-
-	//クリア画像を表示
-	var paddingTop = Math.floor(mainScreenHeight * 0.05);
-	var clearImageWidth = Math.floor(screenWidth * 0.8);
-	var clearImageHeight = clearImageWidth;
-
-	$("#gameScreen").append('<div id="clearWhite"></div>');
-	$("#clearWhite")
-	.css("position", "relative")
-	.css("z-index", "1")
-	.css("height", screenHeight + "px")
-	.css("width", screenWidth + "px")
-	.css("background-color", "rgba(255, 255, 255, 0.8)");
-
-	$("#clearWhite").append('<div id="clear"></div>');
-	$("#clear")
-	.css("padding-top", paddingTop + "px")
-	.css("text-align", "center")
-	.css("height", mainScreenHeight + "px")
-	.css("width", screenWidth + "px")
-	.append('<img src="/img/clear.gif" alt="CLEAR CONGRATULATIONS" width=' + clearImageWidth + ' height=' + clearImageHeight + ' />')
-	.append('<br />')
-	.append(getTimeSpanString(timerSecond) + "でクリア")
-	.append('<br />')
-	.append('<input type="button" id="clearButton" name="clearButton" value="結果をみる" />');
-
-	$("#clearButton").bind("click", clearButton_click);
-	*/
 }
 
 function addPx(pxString, n) {
 	var pxNumber = new Number(pxString.replace(/[^-0-9\s]+/g, ''));
 	return (n + pxNumber) + "px";
-}
-
-//アイテムボタンのクリックイベント
-function itemButton_click(event) {
-	var itemId = event.data.itemId;
-	// jConfirm(itemName[itemId] + "を使用してもよろしいですか？", "確認", function (r) {
-		// if (r == true) {
-			// //「はい」をクリック
-			// userItems[itemId]--;
-			// usedItems[itemId]++;
-			// updateItemButton(itemId);
-			// //スグクリアの場合はクリア
-			// if (itemId == 1 || itemId == "1") {
-				// clear();
-			// }
-		// }
-	// });
-}
-
-//アイテムボタンの表示を更新する
-function updateItemButton(itemId) {
-	if (userItems[itemId] > 0) {
-		//個数を減らす
-		$("#item_" + itemId).html('<input type="button" id="itemButton_' + itemId + '" name="itemButton_' + itemId + '" value="' + itemName[itemId] + '（×' + userItems[itemId] + '）" />');
-		$("#itemButton_" + itemId).bind('click', {"itemId": itemId}, itemButton_click);
-	} else {
-		//ボタンそのものを削除
-		if (hasItem()) {
-			$("#item_" + itemId).remove();
-		} else {
-			$("#itemArea").remove();
-		}
-	}
-
-}
-
-//アイテムを持っているかどうか調べる
-function hasItem() {
-	var result = false;
-	for (var itemId = 1; itemId <= 3; itemId++) {
-		if (userItems[itemId] > 0) {
-			result = true;
-		}
-	}
-	return result;
-}
-
-//ギブアップボタンのクリックイベント
-function giveupButton_click(event) {
-	// jConfirm("ギブアップしてもよろしいですか？", "確認", function (r) {
-		// if (r == true) {
-			// location.href = giveupUri;
-		// }
-	// });
-}
-
-//クリアボタンのクリックイベント
-function clearButton_click(event) {
-	//ダブルクリック防止のために一度クリックしたらdisabledにする
-	$("#clearButton").attr('disabled','disabled');
-	//答えを文字列に変換
-	var answer = "";
-	var binary = "";
-	for (var row = 0; row < inputRowCount; row++) {
-		for (var col = 0; col < inputColCount; col++) {
-			if (input[col][row] == 1) {
-				binary += "1";
-			} else {
-				binary += "0";
-			}
-			if (binary.length == 8) {
-				var hex = parseInt(binary, 2).toString(16);
-				if (hex.length == 1) {
-					hex = "0" + hex.toString();
-				}
-				answer += hex;
-				binary = "";
-			} else if (row == inputRowCount - 1 && col == inputColCount - 1) {
-				//右端を0で埋める
-				binary += new Array(8 - binary.length + 1).join('0');
-				var hex = parseInt(binary, 2).toString(16);
-				if (hex.length == 1) {
-					hex = "0" + hex.toString();
-				}
-				answer += hex;
-			}
-		}
-	}
-	if (timerSecond > 5999) {
-		timerSecond = 5999;
-	}
-	$("#gameScreen").append('<form id="clearForm" method="post" action="' + clearUri +'"></form>');
-	$("#clearForm").append(getHiddenInputTagString("segmentTimeStamp", segmentTimeStamp));
-	$("#clearForm").append(getHiddenInputTagString("clearTime", timerSecond));
-	$("#clearForm").append(getHiddenInputTagString("answer", answer));
-	//デバッグ用
-	//$("#clearForm").append(getHiddenInputTagString("opensocial_owner_id", opensocial_owner_id));
-
-	//アイテムの使用情報
-	for (var itemId = 1; itemId <= 3; itemId++) {
-		if (usedItems[itemId] > 0) {
-			$("#clearForm").append(getHiddenInputTagString("itemId" + itemId + "usedCount", usedItems[itemId]));
-		}
-	}
-	$("#clearForm").submit();
-}
-
-function getHiddenInputTagString(name, value) {
-	return '<input type="hidden" name="' + name +'" value="' + value + '" />';
 }
 
 function doScroll() {
