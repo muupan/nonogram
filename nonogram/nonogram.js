@@ -5,6 +5,7 @@
 //以下設定項目
 const usesMouseEvents = false;
 const screenWidth = 320;
+const screenHeight = 480;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -15,6 +16,7 @@ const marginBetweenInputAreaAndBottomArea = 10;
 const marginBetweenBottomAreaAndButtonArea = 10;
 const continuousInputModeTime = 600;
 const inputHistoryMaxCount = 10;
+const numberCellSizeRatio = 3 / 4;
 
 //以下非設定項目
 
@@ -69,12 +71,17 @@ const upNumberRowCount = Math.ceil(inputRowCount / 2);
 const leftNumberColCount = Math.ceil(inputColCount / 2);
 const leftNumberRowCount = inputRowCount;
 
-const inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * (2 / 3)));
+const inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * numberCellSizeRatio));
 const inputCellHeight = inputCellWidth;
 const upNumberCellWidth = inputCellWidth;
-const upNumberCellHeight = Math.floor(inputCellHeight * (2 / 3));
-const leftNumberCellWidth = Math.floor(inputCellWidth * (2 / 3));
+const upNumberCellHeight = Math.floor(inputCellHeight * numberCellSizeRatio);
+const leftNumberCellWidth = Math.floor(inputCellWidth * numberCellSizeRatio);
 const leftNumberCellHeight = inputCellHeight;
+
+const upNumberAreaWidth = upNumberCellWidth * upNumberColCount;
+const upNumberAreaHeight = upNumberCellHeight * upNumberRowCount;
+const leftNumberAreaWidth = leftNumberCellWidth * leftNumberColCount;
+const leftNumberAreaHeight = leftNumberCellHeight * leftNumberRowCount;
 
 const upNumberAreaStartX = marginLeft + leftNumberCellWidth * leftNumberColCount + marginLeftOfInputArea;
 const upNumberAreaStartY = marginTop;
@@ -98,7 +105,7 @@ const buttonAreaWidth = screenWidth - marginLeft - marginRight;
 const buttonAreaStartX = marginLeft;
 const buttonAreaStartY = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
 
-const screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
+//const screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
 
 //入力ステータス
 var input = new Array(inputColCount);
@@ -111,7 +118,6 @@ for (var col = 0; col < inputColCount; col++) {
 //入力ヒストリー
 var inputHistoryCount = 0;
 var inputHistory = new Array();
-backupInput();
 
 //正解チェック
 var upNumberColCorrectness = new Array(upNumberColCount);
@@ -160,6 +166,8 @@ var continuousInputStartCell = null;
 var continuousInputColor = null;
 var continuousInputModeTimeout = null;
 
+var undoIsDisabled = true;
+
 //クリア画像の先読み
 $('<img src="/img/clear.gif">');
 
@@ -182,8 +190,10 @@ window.onload = function() {
 	.css("text-align", "right")
 	.css("line-height", bottomAreaHeight + "px");
 	
-	$('<a class="button">Undo</a>')
-	.appendTo("#bottomArea");
+	$('<button id="undoButton">Undo</button>')
+	.appendTo("#bottomArea")
+	.bind(touchstart, preventDefault);
+	disableUndo();
 	
 	/*
 	//タイマー
@@ -226,6 +236,9 @@ function backupInput() {
 	if (inputHistoryCount == inputHistoryMaxCount) {
 		inputHistory.shift();
 	} else {
+		if (inputHistoryCount == 0) {
+			enableUndo();
+		}
 		inputHistoryCount++;
 	}
 	var backup = new Array(inputColCount);
@@ -235,22 +248,21 @@ function backupInput() {
 			backup[col][row] = input[col][row];
 		}
 	}
-	inputHistory.push(backup);
+	inputHistory.push(backup);	
 }
 
 function initGameScreen() {
 	$("#gameScreen")
 	.css("width", screenWidth + "px")
 	.css("height", screenHeight + "px")
-	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px")
-	.bind(touchstart, gameScreen_touchstart)
-	.bind(touchmove, gameScreen_touchmove)
-	.bind(touchend, gameScreen_touchend);
+	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
 }
 
 function initNonogram() {
 	createNonogram();
+	createUpNumberArea();
 	createUpNumberCells();
+	createLeftNumberArea();
 	createLeftNumberCells();
 	createInputArea();
 	createInputCells();
@@ -260,16 +272,20 @@ function initNonogram() {
 function createNonogram() {
 	$("#gameScreen").append('<div id="nonogram"></div>');
 	$("#nonogram")
-	.css("width", nonogramRect.width)
-	.css("height", nonogramRect.height);
+	.css("width", screenWidth)
+	.css("height", screenHeight)
+	.bind(touchstart, gameScreen_touchstart)
+	.bind(touchmove, gameScreen_touchmove)
+	.bind(touchend, gameScreen_touchend);
 }
 
 function createUpNumberArea() {
 	$('<div id="upNumberArea"></div>')
 	.appendTo("#nonogram")
-	.css("left", inputAreaStartX + "px")
-	.css("top", inputAreaStartY + "px")
-	.css("width", inputAreaWidth + "px");
+	.css("left", upNumberAreaStartX + "px")
+	.css("top", upNumberAreaStartY + "px")
+	.css("width", upNumberAreaWidth + "px")
+	.css("height", upNumberAreaHeight + "px");
 }
 
 function createUpNumberCells() {
@@ -277,8 +293,8 @@ function createUpNumberCells() {
 	for (var col = 0; col < upNumberColCount; col++) {
 		for (var row = 0; row < upNumberRowCount; row++) {
 			var id = getUpNumberCellId(col, row);
-			var x = upNumberAreaStartX + col * upNumberCellWidth;
-			var y = upNumberAreaStartY + row * upNumberCellHeight;
+			var x = col * upNumberCellWidth;
+			var y = row * upNumberCellHeight;
 			var content;
 			if (upNumber[col][row] == 0 && row != upNumberRowCount - 1) {
 				content = "";
@@ -286,7 +302,7 @@ function createUpNumberCells() {
 				content = upNumber[col][row];
 			}
 			$('<div id="' + id + '"></div>')
-			.appendTo("#nonogram")
+			.appendTo("#upNumberArea")
 			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
@@ -303,13 +319,22 @@ function createUpNumberCells() {
 	}
 }
 
+function createLeftNumberArea() {
+	$('<div id="leftNumberArea"></div>')
+	.appendTo("#nonogram")
+	.css("left", leftNumberAreaStartX + "px")
+	.css("top", leftNumberAreaStartY + "px")
+	.css("width", leftNumberAreaWidth + "px")
+	.css("height", leftNumberAreaHeight + "px");
+}
+
 function createLeftNumberCells() {
 	//左の数字セル
 	for (var col = 0; col < leftNumberColCount; col++) {
 		for (var row = 0; row < leftNumberRowCount; row++) {
 			var id = getLeftNumberCellId(col, row);
-			var x = leftNumberAreaStartX + col * leftNumberCellWidth;
-			var y = leftNumberAreaStartY + row * leftNumberCellHeight;
+			var x = col * leftNumberCellWidth;
+			var y = row * leftNumberCellHeight;
 			var content;
 			if (leftNumber[col][row] == 0 && col != leftNumberColCount - 1) {
 				content = "";
@@ -317,7 +342,7 @@ function createLeftNumberCells() {
 				content = leftNumber[col][row];
 			}
 			$('<div id="' + id + '"></div>')
-			.appendTo("#nonogram")
+			.appendTo("#leftNumberArea")
 			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
@@ -391,15 +416,21 @@ function createSelection() {
 	.css("height", (inputCellHeight - 4) + "px");
 }
 
+//restore previous input (undo)
 function restoreInput() {
 	if (inputHistoryCount > 0) {
 		var backup = inputHistory.pop();
 		for (var col = 0; col < inputColCount; col++) {
 			for (var row = 0; row < inputRowCount; row++) {
-				input[col][row] = backup[col][row];
+				setInputCellStatus(new Cell(col, row), backup[col][row]);
 			}
 		}
 		inputHistoryCount--;
+		if (inputHistoryCount == 0) {
+			disableUndo();
+		}
+	} else {
+		alert("no history");
 	}
 }
 
@@ -445,6 +476,7 @@ function gameScreen_touchend(event) {
 	clearTimeout(continuousInputModeTimeout);
 	if (!hasMoved) {
 		if (currentTime - startTime < continuousInputModeTime) {
+			backupInput();
 			if (isContinuousInputMode) {
 				var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
 				var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
@@ -462,7 +494,6 @@ function gameScreen_touchend(event) {
 			} else {
 				changeSelectedCellColor();
 			}
-			backupInput();
 		}
 	}
 	hasMoved = false;
@@ -1027,4 +1058,24 @@ function doScroll() {
 	if(window.pageYOffset === 0) {
 		window.scrollTo(0,1);
 	}
+}
+
+function undoButton_touchstart(event) {
+	restoreInput();
+}
+
+function enableUndo() {
+	$("#undoButton")
+	.removeAttr("disabled")
+	.bind(touchstart, undoButton_touchstart);
+}
+
+function disableUndo() {
+	$("#undoButton")
+	.attr("disabled", "disabled")
+	.unbind(touchstart, undoButton_touchstart);
+}
+
+function preventDefault(event) {
+	event.preventDefault();
 }
