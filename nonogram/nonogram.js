@@ -3,8 +3,8 @@
  */
 
 //以下設定項目
-const screenWidth = 320;
 const usesMouseEvents = false;
+const screenWidth = 320;
 const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
@@ -239,7 +239,10 @@ function initGameScreen() {
 	$("#gameScreen")
 	.css("width", screenWidth + "px")
 	.css("height", screenHeight + "px")
-	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
+	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px")
+	.bind(touchstart, gameScreen_touchstart)
+	.bind(touchmove, gameScreen_touchmove)
+	.bind(touchend, gameScreen_touchend);
 }
 
 function initNonogram() {
@@ -255,10 +258,7 @@ function createNonogram() {
 	$("#gameScreen").append('<div id="nonogram"></div>');
 	$("#nonogram")
 	.css("width", nonogramRect.width)
-	.css("height", nonogramRect.height)
-	.bind(touchstart, gameScreen_touchstart)
-	.bind(touchmove, gameScreen_touchmove)
-	.bind(touchend, gameScreen_touchend);
+	.css("height", nonogramRect.height);
 }
 
 function createUpNumberArea() {
@@ -276,29 +276,26 @@ function createUpNumberCells() {
 			var id = getUpNumberCellId(col, row);
 			var x = upNumberAreaStartX + col * upNumberCellWidth;
 			var y = upNumberAreaStartY + row * upNumberCellHeight;
-			var color;
-			if (col % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
 			var content;
 			if (upNumber[col][row] == 0 && row != upNumberRowCount - 1) {
 				content = "";
 			} else {
 				content = upNumber[col][row];
 			}
-			$("#nonogram").append('<div id="' + id + '"></div>');
-			$("#" + id)
-			.css("position", "absolute")
+			$('<div id="' + id + '"></div>')
+			.appendTo("#nonogram")
+			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("background-color", color)
 			.css("width", upNumberCellWidth + "px")
 			.css("height", upNumberCellHeight + "px")
 			.css("line-height", upNumberCellHeight + "px")
-			.css("text-align", "center")
 			.html(content);
+			if (col % 2 == 0) {
+				$("#" + id).addClass("even");
+			} else {
+				$("#" + id).addClass("odd");
+			}
 		}
 	}
 }
@@ -310,29 +307,26 @@ function createLeftNumberCells() {
 			var id = getLeftNumberCellId(col, row);
 			var x = leftNumberAreaStartX + col * leftNumberCellWidth;
 			var y = leftNumberAreaStartY + row * leftNumberCellHeight;
-			var color;
-			if (row % 2 == 0) {
-				color = "#FFFFFF";
-			} else {
-				color = "#EEEEEE";
-			}
 			var content;
 			if (leftNumber[col][row] == 0 && col != leftNumberColCount - 1) {
 				content = "";
 			} else {
 				content = leftNumber[col][row];
 			}
-			$("#nonogram").append('<div id="' + id + '"></div>');
-			$("#" + id)
-			.css("position", "absolute")
+			$('<div id="' + id + '"></div>')
+			.appendTo("#nonogram")
+			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("background-color", color)
 			.css("width", leftNumberCellWidth + "px")
 			.css("height", leftNumberCellHeight + "px")
 			.css("line-height", leftNumberCellHeight + "px")
-			.css("text-align", "center")
 			.html(content);
+			if (row % 2 == 0) {
+				$("#" + id).addClass("even");
+			} else {
+				$("#" + id).addClass("odd");
+			}
 		}
 	}
 }
@@ -371,6 +365,7 @@ function createSelection() {
 	//選択列
 	$('<div id="selectedCol"></div>')
 	.appendTo("#nonogram")
+	.addClass("selection")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", upNumberAreaStartY + "px")
 	.css("width", (inputCellWidth - 0) + "px")
@@ -378,6 +373,7 @@ function createSelection() {
 	//選択行
 	$('<div id="selectedRow"></div>')
 	.appendTo("#nonogram")
+	.addClass("selection")
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("width", (nonogramRect.width - 0) + "px")
@@ -385,6 +381,7 @@ function createSelection() {
 	//選択セル
 	$('<div id="selectedCell"></div>')
 	.appendTo("#nonogram")
+	.addClass("selection")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("width", (inputCellWidth - 4) + "px")
@@ -404,8 +401,8 @@ function restoreInput() {
 }
 
 function gameScreen_touchstart(event) {
-	//alert("mousedown");
 	event.preventDefault();
+	doScroll();
 	startPoint = getTouchPoint(event);
 	startCell = new Cell(selectedCell.col, selectedCell.row);
 	startTime = new Date().getTime();
@@ -1023,8 +1020,8 @@ function getHiddenInputTagString(name, value) {
 	return '<input type="hidden" name="' + name +'" value="' + value + '" />';
 }
 
-function doScroll(){
-	if(window.pageYOffset === 0){
+function doScroll() {
+	if(window.pageYOffset === 0) {
 		window.scrollTo(0,1);
 	}
 }

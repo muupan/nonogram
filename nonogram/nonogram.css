@@ -2,6 +2,24 @@ body {
 	margin: 0px;
 }
 
+div#gameScreen {
+	background-image: url("images/green_dust_scratch.png");
+}
+
+div.numberCell {
+	position: absolute;
+	text-align: center;
+	color: rgb(50, 50, 50);
+}
+
+div.numberCell.odda {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.numberCell.evena {
+	background-color: rgba(230, 230, 230, 0.7);
+}
+
 div.inputCell {
 	position: absolute;
 	border-top: 1px solid rgb(200, 200, 200);
@@ -11,34 +29,35 @@ div.inputCell {
 }
 
 div.inputCell.white {
-	background-color: rgb(255, 255, 255);
+	background-color: rgba(255, 255, 255, 0.7);
 }
 
 div.inputCell.black {
-	background-color: rgb(0, 0, 0);
+	background-color: rgba(0, 0, 0, 0.7);
 }
 
 div.inputCell.cross {
-	background-color: rgb(255, 255, 255);
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.selection {
+	background-color: rgba(255, 150, 50, 0.2);
 }
 
 div#selectedCol {
 	position: absolute;
-	background-color: rgba(255, 0, 0, 0.2);
 }
 
 div#selectedRow {
 	position: absolute;
-	background-color: rgba(255, 0, 0, 0.2);
 }
 
 div#selectedCell {
 	position: absolute;
-	background-color: rgba(255, 0, 0, 0.2);
 	z-index: 1000;
 	border-style: solid;
 	border-width: 2px;
-	border-color: rgb(255, 0, 0);
+	border-color: rgb(255, 150, 50);
 }
 
 div.overlapCell {
