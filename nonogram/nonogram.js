@@ -3,7 +3,7 @@
  */
 
 //以下設定項目
-const usesMouseEvents = true;
+const usesMouseEvents = false;
 const screenWidth = 320;
 const screenHeight = 480;
 const marginLeft = 10;
@@ -92,6 +92,11 @@ const inputAreaStartX = upNumberAreaStartX;
 const inputAreaStartY = leftNumberAreaStartY;
 const inputAreaWidth = inputCellWidth * inputColCount;
 const inputAreaHeight = inputCellHeight * inputRowCount;
+
+const shrinkedInputAreaWidth = (inputCellWidth - 2) * inputColCount + 2;
+const shrinkedInputAreaHeight = (inputCellHeight - 2) * inputRowCount + 2;
+const shrinkedInputAreaStartX = Math.floor((screenWidth - shrinkedInputAreaWidth) / 2);
+const shrinkedInputAreaStartY = inputAreaStartY + Math.floor((inputAreaHeight - shrinkedInputAreaHeight) / 2);
 
 const bottomAreaHeight = inputCellHeight;
 const bottomAreaWidth = screenWidth - marginLeft - marginRight;
@@ -908,18 +913,73 @@ function getTimeSpanString(s) {
 	return result;
 }
 
-var opacity = 0.8;
+var currentframe = 0;
 
 //クリア画面を表示
 function clear() {
 	var timerId = setInterval(function () {
-		$("#upNumberArea").css("opacity", opacity);
-		$("#leftNumberArea").css("opacity", opacity);
-		$("#selectedCol").css("opacity", opacity);
-		$("#selectedRow").css("opacity", opacity);
-		$("#selectedCell").css("opacity", opacity);
-		opacity -= 0.2;
-	}, 200);
+		if (currentframe < 10) {
+			var opacity = 0.9 - 0.1 * currentframe;
+			$("#upNumberArea").css("opacity", opacity);
+			$("#leftNumberArea").css("opacity", opacity);
+			$("#selectedCol").css("opacity", opacity);
+			$("#selectedRow").css("opacity", opacity);
+			$("#selectedCell").css("opacity", opacity);
+			$("#bottomArea").css("opacity", opacity);
+			for (var col = 0; col < inputColCount; col++) {
+				for (var row = 0; row < inputRowCount; row++) {
+					if (input[col][row] == STATUS_CROSS) {
+						$("#" + createInputCellCanvasId(new Cell(col, row))).css("opacity", opacity);
+					}
+				}
+			}
+		} else if (currentframe < 20) {
+			var inputAreaX = inputAreaStartX + (shrinkedInputAreaStartX - inputAreaStartX) / 10 * (currentframe - 9);
+			var inputAreaY = inputAreaStartY + (shrinkedInputAreaStartY - inputAreaStartY) / 10 * (currentframe - 9);
+			$("#inputArea")
+			.css("left", inputAreaX + "px")
+			.css("top", inputAreaY + "px");
+			for (var col = 0; col < inputColCount; col++) {
+				var row = currentframe - 10;
+				if (row != 0) {
+					$("#" + getInputCellId(col, row)).css("border-top-style", "none");
+				}
+				if (row != inputRowCount - 1) {
+					$("#" + getInputCellId(col, row)).css("border-bottom-style", "none");
+				}
+			}
+			for (var row = 0; row < inputRowCount; row++) {
+				var col = currentframe - 10;
+				if (col != 0) {
+					$("#" + getInputCellId(col, row)).css("border-left-style", "none");
+				}
+				if (col != inputColCount - 1) {
+					$("#" + getInputCellId(col, row)).css("border-right-style", "none");
+				}
+			}
+			for (var col = currentframe - 9; col < inputColCount; col++) {
+				for (var row = 0; row < inputRowCount; row++) {
+					var oldLeft = $("#" + getInputCellId(col, row)).css("left");
+					if (col == currentframe - 9) {
+						$("#" + getInputCellId(col, row)).css("left", addPx(oldLeft, -1));
+					} else {
+						$("#" + getInputCellId(col, row)).css("left", addPx(oldLeft, -2));
+					}
+				}
+			}
+			for (var col = 0; col < inputColCount; col++) {
+				for (var row = currentframe - 9; row < inputRowCount; row++) {
+					var oldTop = $("#" + getInputCellId(col, row)).css("top");
+					if (row == currentframe - 9) {
+						$("#" + getInputCellId(col, row)).css("top", addPx(oldTop, -1));
+					} else {
+						$("#" + getInputCellId(col, row)).css("top", addPx(oldTop, -2));
+					}
+				}
+			}
+		}
+		currentframe++;
+	}, 100);
 	
 	/*
 	//操作不可
@@ -954,6 +1014,11 @@ function clear() {
 
 	$("#clearButton").bind("click", clearButton_click);
 	*/
+}
+
+function addPx(pxString, n) {
+	var pxNumber = new Number(pxString.replace(/[^-0-9\s]+/g, ''));
+	return (n + pxNumber) + "px";
 }
 
 //アイテムボタンのクリックイベント

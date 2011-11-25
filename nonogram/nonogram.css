@@ -22,10 +22,12 @@ div.numberCell.evena {
 
 div.inputCell {
 	position: absolute;
-	border-top: 1px solid rgb(200, 200, 200);
-	border-right: 1px solid rgb(100, 100, 100);
-	border-bottom: 1px solid rgb(50, 50, 50);
-	border-left: 1px solid rgb(150, 150, 150);
+	border-style: solid;
+	border-width: 1px;
+	border-top-color: rgb(200, 200, 200);
+	border-right-color: rgb(100, 100, 100);
+	border-bottom-color: rgb(50, 50, 50);
+	border-left-color: rgb(150, 150, 150);
 }
 
 div.inputCell.white {
