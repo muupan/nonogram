@@ -3,7 +3,7 @@
  */
 
 //以下設定項目
-const usesMouseEvents = true;
+const usesMouseEvents = (location.href.indexOf("nonogramtouch.com") == -1);
 const screenWidth = 320;
 const screenHeight = 480;
 const marginLeft = 10;
@@ -808,9 +808,17 @@ var currentframe = 0;
 
 //クリア画面を表示
 function clear() {
-	var timerId = setInterval(function () {
-		if (currentframe < 10) {
-			var opacity = 0.9 - 0.1 * currentframe;
+	var rand = Math.floor(Math.random() * 3);
+	var fadingOutTime = 8;
+	var showingResultTime;
+	if (rand == 2) {
+		showingResultTime = inputColCount + inputRowCount - 1;
+	} else {
+		showingResultTime = inputColCount;
+	}
+	var intervalId = setInterval(function () {
+		if (currentframe < fadingOutTime - 1) {
+			var opacity = 1.0 -  (currentframe + 1) / fadingOutTime;
 			$("#upNumberArea").css("opacity", opacity);
 			$("#leftNumberArea").css("opacity", opacity);
 			$("#selectedCol").css("opacity", opacity);
@@ -824,53 +832,70 @@ function clear() {
 					}
 				}
 			}
-		} else if (currentframe < 20) {
+		} else if (currentframe == fadingOutTime - 1) {
+			$("#upNumberArea").remove();
+			$("#leftNumberArea").remove();
+			$("#selectedCol").remove();
+			$("#selectedRow").remove();
+			$("#selectedCell").remove();
+			$("#bottomArea").remove();
+			for (var col = 0; col < inputColCount; col++) {
+				for (var row = 0; row < inputRowCount; row++) {
+					if (input[col][row] == STATUS_CROSS) {
+						$("#" + createInputCellCanvasId(new Cell(col, row))).remove();
+					}
+				}
+			}
+		} else if (currentframe < fadingOutTime + showingResultTime) {
 			var inputAreaX = inputAreaStartX + (shrinkedInputAreaStartX - inputAreaStartX) / 10 * (currentframe - 9);
 			var inputAreaY = inputAreaStartY + (shrinkedInputAreaStartY - inputAreaStartY) / 10 * (currentframe - 9);
+			/*
 			$("#inputArea")
 			.css("left", inputAreaX + "px")
-			.css("top", inputAreaY + "px");
-			for (var col = 0; col < inputColCount; col++) {
-				var row = currentframe - 10;
-				if (row != 0) {
-					$("#" + getInputCellId(col, row)).css("border-top-style", "none");
+			.css("top", inputAreaX + "px");
+			*/
+			if (rand == 0) {
+				var row = currentframe - fadingOutTime;
+				for (var col = 0; col < inputColCount; col++) {
+					convertInputCellToResultCell(new Cell(col, row));
 				}
-				if (row != inputRowCount - 1) {
-					$("#" + getInputCellId(col, row)).css("border-bottom-style", "none");
-				}
-			}
-			for (var row = 0; row < inputRowCount; row++) {
-				var col = currentframe - 10;
-				if (col != 0) {
-					$("#" + getInputCellId(col, row)).css("border-left-style", "none");
-				}
-				if (col != inputColCount - 1) {
-					$("#" + getInputCellId(col, row)).css("border-right-style", "none");
-				}
-			}
-			for (var col = currentframe - 9; col < inputColCount; col++) {
+			} else if (rand == 1) {
+				var col = currentframe - fadingOutTime;
 				for (var row = 0; row < inputRowCount; row++) {
-					var oldLeft = $("#" + getInputCellId(col, row)).css("left");
-					if (col == currentframe - 9) {
-						$("#" + getInputCellId(col, row)).css("left", addPx(oldLeft, -1));
-					} else {
-						$("#" + getInputCellId(col, row)).css("left", addPx(oldLeft, -2));
-					}
+					convertInputCellToResultCell(new Cell(col, row));
 				}
-			}
-			for (var col = 0; col < inputColCount; col++) {
-				for (var row = currentframe - 9; row < inputRowCount; row++) {
-					var oldTop = $("#" + getInputCellId(col, row)).css("top");
-					if (row == currentframe - 9) {
-						$("#" + getInputCellId(col, row)).css("top", addPx(oldTop, -1));
-					} else {
-						$("#" + getInputCellId(col, row)).css("top", addPx(oldTop, -2));
-					}
+			} else if (rand == 2) {
+				var offset = currentframe - fadingOutTime;
+				for (var col = Math.max(0, offset - inputColCount + 1); col <= Math.min(inputColCount - 1, offset); col++) {
+					var row = offset - col;
+					convertInputCellToResultCell(new Cell(col, row));
 				}
 			}
 		}
 		currentframe++;
 	}, 100);
+}
+
+function convertInputCellToResultCell(cell) {
+	obj = $("#" + getInputCellId(cell.col, cell.row))
+	obj
+	.addClass("resultCell")
+	.css("width", inputCellWidth + "px")
+	.css("height", inputCellHeight + "px");
+	if (cell.col == 0) {
+		obj
+		.addClass("left")
+		.css("left", addPx(obj.css("left"), -1));
+	} else if (cell.col == inputColCount - 1) {
+		obj.addClass("right");
+	}
+	if (cell.row == 0) {
+		obj
+		.addClass("top")
+		.css("top", addPx(obj.css("top"), -1));
+	} else if (cell.row == inputRowCount - 1) {
+		obj.addClass("bottom");
+	}
 }
 
 function addPx(pxString, n) {
