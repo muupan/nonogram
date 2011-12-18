@@ -5,19 +5,19 @@
 //以下設定項目
 const usesMouseEvents = (location.href.indexOf("nonogramtouch.com") == -1);
 const screenWidth = 320;
-const screenHeight = 480;
-const marginLeft = 10;
-const marginRight = 10;
-const marginTop = 10;
-const marginBottom = 10;
-const nonogramAreaWidth = 300;
-const nonogramAreaHeight = 300;
+const screenHeight = 416; //iphoneのurlバーを隠した状態の表示領域
+const marginLeft = 5;
+const marginRight = 5;
+const marginTop = 5;
+const marginBottom = 5;
+const nonogramAreaWidth = 310;
+const nonogramAreaHeight = 310;
 const marginLeftOfInputArea = 5;
 const marginTopOfInputArea = 5;
 const marginBetweenInputAreaAndBottomArea = 10;
 const marginBetweenBottomAreaAndButtonArea = 10;
 const continuousInputModeTime = 600;
-const inputHistoryMaxCount = 10;
+const inputHistoryMaxCount = 99;
 const numberCellSizeRatio = 3 / 4;
 
 //以下非設定項目
@@ -101,7 +101,7 @@ const inputAreaStartY = leftNumberAreaStartY;
 const shrinkedInputAreaWidth = inputAreaWidth + 2;
 const shrinkedInputAreaHeight = inputAreaHeight + 2;
 const shrinkedInputAreaStartX = marginLeft + Math.floor((nonogramAreaWidth - shrinkedInputAreaWidth) / 2);
-const shrinkedInputAreaStartY = marginTop + Math.floor((nonogramAreaHeight - shrinkedInputAreaHeight) / 2);
+const shrinkedInputAreaStartY = Math.floor((screenHeight - shrinkedInputAreaHeight) / 2);
 
 const bottomAreaHeight = inputCellHeight;
 const bottomAreaWidth = screenWidth - marginLeft - marginRight;
@@ -406,33 +406,42 @@ function restoreInput() {
 
 function gameScreen_touchstart(event) {
 	event.preventDefault();
-	doScroll();
-	startPoint = getTouchPoint(event);
-	startCell = new Cell(selectedCell.col, selectedCell.row);
-	startTime = new Date().getTime();
-	hasMoved = false;
-	if (isContinuousInputMode) {
-		continuousInputModeTimeout = setTimeout(function () {
-			if (startPoint != null && !hasMoved) {
-				deleteOverlapCells();
-				isContinuousInputMode = false;
-				continuousInputStartCell = null;
-				continuousInputColor = null;
-			}
-		}, continuousInputModeTime);
+	var touchPoint = getTouchPoint(event);
+	//alert("x:" + touchPoint.x + " y:" + touchPoint.y + " scroll:" + document.body.scrollTop);
+	var windowY = touchPoint.y - document.body.scrollTop;
+	if (windowY < 20) {
+		window.scrollTo(0, 0);
+	} else if (windowY > document.documentElement.clientHeight - 20) {
+		window.scrollTo(0, 999);
 	} else {
-		continuousInputModeTimeout = setTimeout(function () {
-			if (startPoint != null && !hasMoved) {
-				isContinuousInputMode = true;
-				continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
-				continuousInputColor = input[selectedCell.col][selectedCell.row];
-				deg = 0;
-				updateOverlapCells();
-			}
-		}, continuousInputModeTime);
-	}
-	if (usesMouseEvents) {
-		mouseIsDown = true;
+		doScroll();
+		startPoint = getTouchPoint(event);
+		startCell = new Cell(selectedCell.col, selectedCell.row);
+		startTime = new Date().getTime();
+		hasMoved = false;
+		if (isContinuousInputMode) {
+			continuousInputModeTimeout = setTimeout(function () {
+				if (startPoint != null && !hasMoved) {
+					deleteOverlapCells();
+					isContinuousInputMode = false;
+					continuousInputStartCell = null;
+					continuousInputColor = null;
+				}
+			}, continuousInputModeTime);
+		} else {
+			continuousInputModeTimeout = setTimeout(function () {
+				if (startPoint != null && !hasMoved) {
+					isContinuousInputMode = true;
+					continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
+					continuousInputColor = input[selectedCell.col][selectedCell.row];
+					deg = 0;
+					updateOverlapCells();
+				}
+			}, continuousInputModeTime);
+		}
+		if (usesMouseEvents) {
+			mouseIsDown = true;
+		}
 	}
 }
 
@@ -906,8 +915,9 @@ function addPx(pxString, n) {
 
 function doScroll() {
 	if(window.pageYOffset === 0) {
-		window.scrollTo(0,1);
+		window.scrollTo(0, 0);
 	}
+		//alert("width:" + document.documentElement.clientWidth + " height:" + document.documentElement.clientHeight);
 }
 
 function undoButton_touchstart(event) {
