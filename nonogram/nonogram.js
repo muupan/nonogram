@@ -10,6 +10,8 @@ const marginLeft = 10;
 const marginRight = 10;
 const marginTop = 10;
 const marginBottom = 10;
+const nonogramAreaWidth = 300;
+const nonogramAreaHeight = 300;
 const marginLeftOfInputArea = 5;
 const marginTopOfInputArea = 5;
 const marginBetweenInputAreaAndBottomArea = 10;
@@ -71,8 +73,13 @@ const upNumberRowCount = Math.ceil(inputRowCount / 2);
 const leftNumberColCount = Math.ceil(inputColCount / 2);
 const leftNumberRowCount = inputRowCount;
 
-const inputCellWidth = Math.floor((screenWidth - marginLeft - marginRight - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * numberCellSizeRatio));
+const inputCellMaxWidth = Math.floor((nonogramAreaWidth - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * numberCellSizeRatio));
+const inputCellMaxHeight = Math.floor((nonogramAreaHeight - marginTopOfInputArea) / (inputRowCount + upNumberRowCount * numberCellSizeRatio));
+const inputCellWidth = Math.min(inputCellMaxWidth, inputCellMaxHeight);
 const inputCellHeight = inputCellWidth;
+const inputAreaWidth = inputCellWidth * inputColCount;
+const inputAreaHeight = inputCellHeight * inputRowCount;
+
 const upNumberCellWidth = inputCellWidth;
 const upNumberCellHeight = Math.floor(inputCellHeight * numberCellSizeRatio);
 const leftNumberCellWidth = Math.floor(inputCellWidth * numberCellSizeRatio);
@@ -83,20 +90,18 @@ const upNumberAreaHeight = upNumberCellHeight * upNumberRowCount;
 const leftNumberAreaWidth = leftNumberCellWidth * leftNumberColCount;
 const leftNumberAreaHeight = leftNumberCellHeight * leftNumberRowCount;
 
-const upNumberAreaStartX = marginLeft + leftNumberCellWidth * leftNumberColCount + marginLeftOfInputArea;
-const upNumberAreaStartY = marginTop;
-const leftNumberAreaStartX = marginLeft;
-const leftNumberAreaStartY = marginTop + upNumberCellHeight * upNumberRowCount + marginTopOfInputArea;
+const upNumberAreaStartY = marginTop + (nonogramAreaHeight - (inputAreaHeight + upNumberAreaHeight + marginTopOfInputArea)) / 2;
+const leftNumberAreaStartX = marginLeft + (nonogramAreaWidth - (inputAreaWidth + leftNumberAreaWidth + marginLeftOfInputArea)) / 2;
+const upNumberAreaStartX = leftNumberAreaStartX + leftNumberAreaWidth + marginLeftOfInputArea;
+const leftNumberAreaStartY = upNumberAreaStartY + upNumberAreaHeight + marginTopOfInputArea;
 
 const inputAreaStartX = upNumberAreaStartX;
 const inputAreaStartY = leftNumberAreaStartY;
-const inputAreaWidth = inputCellWidth * inputColCount;
-const inputAreaHeight = inputCellHeight * inputRowCount;
 
-const shrinkedInputAreaWidth = (inputCellWidth - 2) * inputColCount + 2;
-const shrinkedInputAreaHeight = (inputCellHeight - 2) * inputRowCount + 2;
-const shrinkedInputAreaStartX = Math.floor((screenWidth - shrinkedInputAreaWidth) / 2);
-const shrinkedInputAreaStartY = inputAreaStartY + Math.floor((inputAreaHeight - shrinkedInputAreaHeight) / 2);
+const shrinkedInputAreaWidth = inputAreaWidth + 2;
+const shrinkedInputAreaHeight = inputAreaHeight + 2;
+const shrinkedInputAreaStartX = marginLeft + Math.floor((nonogramAreaWidth - shrinkedInputAreaWidth) / 2);
+const shrinkedInputAreaStartY = marginTop + Math.floor((nonogramAreaHeight - shrinkedInputAreaHeight) / 2);
 
 const bottomAreaHeight = inputCellHeight;
 const bottomAreaWidth = screenWidth - marginLeft - marginRight;
@@ -141,7 +146,7 @@ var isPlaying = true;
 //選択中のセル
 var selectedCell = new Cell(0, 0);
 
-const nonogramRect = new Rect(marginTop, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, marginLeft);
+const nonogramRect = new Rect(upNumberAreaStartY, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, leftNumberAreaStartX);
 
 var startPoint = null;
 var startCell = null;
@@ -175,6 +180,7 @@ function initBottomArea() {
 function createBottomArea() {
 	$('<div id="bottomArea"></div>')
 	.appendTo("#gameScreen")
+	.addClass("fadeout")
 	.css("position", "absolute")
 	.css("top", bottomAreaStartY + "px")
 	.css("left", bottomAreaStartX + "px")
@@ -241,6 +247,7 @@ function createNonogram() {
 function createUpNumberArea() {
 	$('<div id="upNumberArea"></div>')
 	.appendTo("#nonogram")
+	.addClass("fadeout")
 	.css("left", upNumberAreaStartX + "px")
 	.css("top", upNumberAreaStartY + "px")
 	.css("width", upNumberAreaWidth + "px")
@@ -281,6 +288,7 @@ function createUpNumberCells() {
 function createLeftNumberArea() {
 	$('<div id="leftNumberArea"></div>')
 	.appendTo("#nonogram")
+	.addClass("fadeout")
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", leftNumberAreaStartY + "px")
 	.css("width", leftNumberAreaWidth + "px")
@@ -353,6 +361,7 @@ function createSelection() {
 	$('<div id="selectedCol"></div>')
 	.appendTo("#nonogram")
 	.addClass("selection")
+	.addClass("fadeout")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", upNumberAreaStartY + "px")
 	.css("width", (inputCellWidth - 0) + "px")
@@ -361,6 +370,7 @@ function createSelection() {
 	$('<div id="selectedRow"></div>')
 	.appendTo("#nonogram")
 	.addClass("selection")
+	.addClass("fadeout")
 	.css("left", leftNumberAreaStartX + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("width", (nonogramRect.width - 0) + "px")
@@ -369,6 +379,7 @@ function createSelection() {
 	$('<div id="selectedCell"></div>')
 	.appendTo("#nonogram")
 	.addClass("selection")
+	.addClass("fadeout")
 	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
 	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
 	.css("width", (inputCellWidth - 4) + "px")
@@ -680,6 +691,7 @@ function setInputCellStatus(cell, status) {
 			//canvas要素でxを書く
 			var canvasId = createInputCellCanvasId(cell);
 			$("#" + id).append('<canvas id="' + canvasId + '" width="' + inputCellWidth + '" height="' + inputCellHeight + '"></canvas>');
+			$("#" + canvasId).addClass("fadeout");
 			var canvas = $("#" + canvasId).get(0);
 			//Canvas要素の対応チェック
 			if (canvas && canvas.getContext) {
@@ -756,7 +768,7 @@ function checkRow(row) {
 	for (var inputRowChunkNumber = 0; inputRowChunkNumber < leftNumberColCount; inputRowChunkNumber++) {
 		inputRowChunk[inputRowChunkNumber] = 0;
 	}
-	for (var col = 0, inputRowChunkNumber = 0; col < inputRowCount; col++) {
+	for (var col = 0, inputRowChunkNumber = 0; col < inputColCount; col++) {
 		if (input[col][row] == 1) {
 			inputRowChunk[inputRowChunkNumber]++;
 		} else if (inputRowChunk[inputRowChunkNumber] > 0) {
@@ -808,72 +820,59 @@ var currentframe = 0;
 
 //クリア画面を表示
 function clear() {
-	var rand = Math.floor(Math.random() * 3);
-	var fadingOutTime = 8;
-	var showingResultTime;
-	if (rand == 2) {
-		showingResultTime = inputColCount + inputRowCount - 1;
+	var rand = null;
+	var frameNum = null;
+	if (inputColCount < inputRowCount) {
+		rand = 0;
+		frameNum = inputRowCount;
+	} else if (inputColCount > inputRowCount) {
+		rand = 1;
+		frameNum = inputColCount;
 	} else {
-		showingResultTime = inputColCount;
+		rand = 2;
+		frameNum = Math.max(inputColCount, inputRowCount);
 	}
-	var intervalId = setInterval(function () {
-		if (currentframe < fadingOutTime - 1) {
-			var opacity = 1.0 -  (currentframe + 1) / fadingOutTime;
-			$("#upNumberArea").css("opacity", opacity);
-			$("#leftNumberArea").css("opacity", opacity);
-			$("#selectedCol").css("opacity", opacity);
-			$("#selectedRow").css("opacity", opacity);
-			$("#selectedCell").css("opacity", opacity);
-			$("#bottomArea").css("opacity", opacity);
-			for (var col = 0; col < inputColCount; col++) {
-				for (var row = 0; row < inputRowCount; row++) {
-					if (input[col][row] == STATUS_CROSS) {
-						$("#" + createInputCellCanvasId(new Cell(col, row))).css("opacity", opacity);
-					}
-				}
-			}
-		} else if (currentframe == fadingOutTime - 1) {
-			$("#upNumberArea").remove();
-			$("#leftNumberArea").remove();
-			$("#selectedCol").remove();
-			$("#selectedRow").remove();
-			$("#selectedCell").remove();
-			$("#bottomArea").remove();
-			for (var col = 0; col < inputColCount; col++) {
-				for (var row = 0; row < inputRowCount; row++) {
-					if (input[col][row] == STATUS_CROSS) {
-						$("#" + createInputCellCanvasId(new Cell(col, row))).remove();
-					}
-				}
-			}
-		} else if (currentframe < fadingOutTime + showingResultTime) {
-			var inputAreaX = inputAreaStartX + (shrinkedInputAreaStartX - inputAreaStartX) / 10 * (currentframe - 9);
-			var inputAreaY = inputAreaStartY + (shrinkedInputAreaStartY - inputAreaStartY) / 10 * (currentframe - 9);
-			/*
-			$("#inputArea")
-			.css("left", inputAreaX + "px")
-			.css("top", inputAreaX + "px");
-			*/
+	$(".fadeout").animate({opacity: 0.0}, 1000, "linear", function() {
+		$(this).remove();
+	});
+	setTimeout(function () {
+		animateWithFrame(frameNum, 1000 / frameNum, function (frame) {
 			if (rand == 0) {
-				var row = currentframe - fadingOutTime;
+				var row = frame;
 				for (var col = 0; col < inputColCount; col++) {
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			} else if (rand == 1) {
-				var col = currentframe - fadingOutTime;
+				var col = frame;
 				for (var row = 0; row < inputRowCount; row++) {
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			} else if (rand == 2) {
-				var offset = currentframe - fadingOutTime;
+				var offset = frame;
 				for (var col = Math.max(0, offset - inputColCount + 1); col <= Math.min(inputColCount - 1, offset); col++) {
 					var row = offset - col;
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			}
-		}
-		currentframe++;
-	}, 100);
+		});
+	}, 1000);
+	setTimeout(function () {
+		$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear");
+	}, 2000);
+}
+
+function animateWithFrame(n, ms, f) {
+	var frame = 0;
+	var id = setInterval(
+		function () {
+			f(frame);
+			frame++;
+			if (frame >= n) {
+				clearInterval(id);
+			}
+		},
+		ms
+	);
 }
 
 function convertInputCellToResultCell(cell) {
@@ -886,14 +885,16 @@ function convertInputCellToResultCell(cell) {
 		obj
 		.addClass("left")
 		.css("left", addPx(obj.css("left"), -1));
-	} else if (cell.col == inputColCount - 1) {
+	}
+	if (cell.col == inputColCount - 1) {
 		obj.addClass("right");
 	}
 	if (cell.row == 0) {
 		obj
 		.addClass("top")
 		.css("top", addPx(obj.css("top"), -1));
-	} else if (cell.row == inputRowCount - 1) {
+	}
+	if (cell.row == inputRowCount - 1) {
 		obj.addClass("bottom");
 	}
 }
