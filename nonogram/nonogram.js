@@ -836,7 +836,7 @@ function clear() {
 		$(this).remove();
 	});
 	setTimeout(function () {
-		animateWithFrame(frameNum, 1000 / frameNum, function (frame) {
+		animateWithFrame(frameNum, 100, function (frame) {
 			if (rand == 0) {
 				var row = frame;
 				for (var col = 0; col < inputColCount; col++) {
@@ -854,14 +854,13 @@ function clear() {
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			}
+		}, function() {
+			$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear");
 		});
 	}, 1000);
-	setTimeout(function () {
-		$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear");
-	}, 2000);
 }
 
-function animateWithFrame(n, ms, f) {
+function animateWithFrame(n, ms, f, callback) {
 	var frame = 0;
 	var id = setInterval(
 		function () {
@@ -869,6 +868,7 @@ function animateWithFrame(n, ms, f) {
 			frame++;
 			if (frame >= n) {
 				clearInterval(id);
+				callback();
 			}
 		},
 		ms
