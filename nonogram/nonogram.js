@@ -103,10 +103,10 @@ const shrinkedInputAreaHeight = inputAreaHeight + 2;
 const shrinkedInputAreaStartX = marginLeft + Math.floor((nonogramAreaWidth - shrinkedInputAreaWidth) / 2);
 const shrinkedInputAreaStartY = Math.floor((screenHeight - shrinkedInputAreaHeight) / 2);
 
-const bottomAreaHeight = inputCellHeight;
-const bottomAreaWidth = screenWidth - marginLeft - marginRight;
+const bottomAreaHeight = 70;
+const bottomAreaWidth = nonogramAreaWidth;
 const bottomAreaStartX = marginLeft;
-const bottomAreaStartY = inputAreaStartY + inputAreaHeight + marginBetweenInputAreaAndBottomArea;
+const bottomAreaStartY = screenHeight - (marginBottom + bottomAreaHeight);
 
 const mainScreenHeight = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
 
@@ -114,6 +114,21 @@ const buttonAreaHeight = Math.floor(mainScreenHeight / 2);
 const buttonAreaWidth = screenWidth - marginLeft - marginRight;
 const buttonAreaStartX = marginLeft;
 const buttonAreaStartY = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
+
+const titleAreaStartX = marginLeft;
+const titleAreaStartY = marginTop;
+const titleAreaWidth = nonogramAreaWidth;
+const titleAreaHeight = screenHeight / 10;
+
+const descriptionAreaStartX = marginLeft;
+const descriptionAreaStartY = titleAreaStartY + titleAreaHeight;
+const descriptionAreaWidth = titleAreaWidth;
+const descriptionAreaHeight = titleAreaHeight;
+
+const resultButtonAreaWidth = titleAreaWidth;
+const resultButtonAreaHeight = screenHeight / 5;
+const resultButtonAreaStartX = marginLeft;
+const resultButtonAreaStartY = screenHeight - (marginBottom + resultButtonAreaHeight);
 
 //const screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
 
@@ -180,19 +195,17 @@ function initBottomArea() {
 function createBottomArea() {
 	$('<div id="bottomArea"></div>')
 	.appendTo("#gameScreen")
-	.addClass("fadeout")
-	.css("position", "absolute")
 	.css("top", bottomAreaStartY + "px")
 	.css("left", bottomAreaStartX + "px")
 	.css("width", bottomAreaWidth + "px")
 	.css("height", bottomAreaHeight + "px")
-	.css("text-align", "right")
 	.css("line-height", bottomAreaHeight + "px");
 }
 
 function createUndoButton() {
 	$('<button id="undoButton">Undo</button>')
 	.appendTo("#bottomArea")
+	.addClass("fadeout")
 	.bind(touchstart, preventDefault);
 	disableUndo();
 }
@@ -405,6 +418,7 @@ function restoreInput() {
 }
 
 function gameScreen_touchstart(event) {
+	if (isPlaying) {}
 	event.preventDefault();
 	var touchPoint = getTouchPoint(event);
 	//alert("x:" + touchPoint.x + " y:" + touchPoint.y + " scroll:" + document.body.scrollTop);
@@ -829,6 +843,11 @@ var currentframe = 0;
 
 //クリア画面を表示
 function clear() {
+	isPlaying = false;
+	$("#nonogram")
+	.unbind(touchstart, gameScreen_touchstart)
+	.unbind(touchmove, gameScreen_touchmove)
+	.unbind(touchend, gameScreen_touchend);
 	var rand = null;
 	var frameNum = null;
 	if (inputColCount < inputRowCount) {
@@ -864,9 +883,58 @@ function clear() {
 				}
 			}
 		}, function() {
-			$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear");
+			$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear", function () {
+				createResultTexts();
+				createResultButtons();
+			});
 		});
 	}, 1000);
+}
+
+function createResultTexts () {
+	$("<div id=\"title\"></div>")
+	.appendTo("#nonogram")
+	.addClass("fadein")
+	.css({
+		left: titleAreaStartX,
+		top: titleAreaStartY,
+		width: titleAreaWidth + "px",
+		height: titleAreaHeight + "px",
+		lineHeight: titleAreaHeight + "px",
+		opacity: 0
+	})
+	.append(title);
+	
+	$("<div id=\"description\"></div>")
+	.appendTo("#nonogram")
+	.addClass("fadein")
+	.css({
+		left: descriptionAreaStartX,
+		top: descriptionAreaStartY,
+		width: descriptionAreaWidth + "px",
+		height: descriptionAreaHeight + "px",
+		opacity: 0
+	})
+	.append(description);
+	$(".fadein").animate({
+		opacity: 1
+	}, 1000);
+}
+
+function createResultButtons () {
+	$("#bottomArea").css({textAlign: "center"});
+	$('<button>List of puzzles</button>')
+	.appendTo("#bottomArea")
+	.addClass("resultButton")
+	.css({opacity: 0})
+	.animate({opacity: 1}, 1000, "linear", function () {
+	})
+	$('<button>Next puzzle</button>')
+	.appendTo("#bottomArea")
+	.addClass("resultButton")
+	.css({opacity: 0})
+	.animate({opacity: 1}, 1000, "linear", function () {
+	})
 }
 
 function animateWithFrame(n, ms, f, callback) {
