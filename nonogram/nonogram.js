@@ -189,6 +189,7 @@ window.onload = function() {
 
 function initBottomArea() {
 	createBottomArea();
+	createMenuButton();
 	createUndoButton();
 }
 
@@ -200,6 +201,13 @@ function createBottomArea() {
 	.css("width", bottomAreaWidth + "px")
 	.css("height", bottomAreaHeight + "px")
 	.css("line-height", bottomAreaHeight + "px");
+}
+
+function createMenuButton() {
+	$('<button id="menuButton">Menu</button>')
+	.appendTo("#bottomArea")
+	.addClass("fadeout")
+	.bind(touchstart, preventDefault);
 }
 
 function createUndoButton() {
@@ -848,6 +856,7 @@ function clear() {
 	.unbind(touchstart, gameScreen_touchstart)
 	.unbind(touchmove, gameScreen_touchmove)
 	.unbind(touchend, gameScreen_touchend);
+	$("#undoButton").unbind(touchstart, undoButton_touchstart);
 	var rand = null;
 	var frameNum = null;
 	if (inputColCount < inputRowCount) {

@@ -4,6 +4,7 @@ body {
 
 div#gameScreen {
 	background-image: url("images/green_dust_scratch.png");
+	font-family: serif;
 }
 
 div.numberCell {
@@ -142,17 +143,23 @@ button {
 	width: 58px;
 	height: 58px;
 	text-align: center;
-	line-height: 60px;
-	font-weight: bold;
 	cursor: pointer;
 	color: rgb(50, 50, 50);
 	background-color: rgba(255, 255, 255, 0.7);
 	-webkit-border-radius: 10px;
 	-moz-border-radius: 10px;
+	font-family: serif;
+	font-weight: bold;
+	font-size: 12px;
+	vertical-align: middle;
 }
 
 button#undoButton {
 	float: left;
+}
+
+button#menuButton {
+	float: right;
 }
 
 button:disabled {
