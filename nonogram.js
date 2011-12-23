@@ -174,18 +174,18 @@ var continuousInputStartCell = null;
 var continuousInputColor = null;
 var continuousInputModeTimeout = null;
 
-//クリア画像の先読み
-$('<img src="/img/clear.gif">');
+var nonogramData = null;
 
 // ===============================================
 // ゲーム画面を生成
 // ===============================================
-window.onload = function() {
+$(document).ready(function() {
 	setTimeout(doScroll, 100);
+	parseNonogramData();
 	initGameScreen();
 	initNonogram();
 	initBottomArea();
-}
+});
 
 function initBottomArea() {
 	createBottomArea();
@@ -901,7 +901,7 @@ function clear() {
 }
 
 function createResultTexts () {
-	$("<div id=\"title\"></div>")
+	$('<div id="title"></div>')
 	.appendTo("#nonogram")
 	.addClass("fadein")
 	.css({
@@ -912,9 +912,9 @@ function createResultTexts () {
 		lineHeight: titleAreaHeight + "px",
 		opacity: 0
 	})
-	.append(title);
+	.append(nonogramData.title);
 	
-	$("<div id=\"description\"></div>")
+	$('<div id="message"></div>')
 	.appendTo("#nonogram")
 	.addClass("fadein")
 	.css({
@@ -924,7 +924,8 @@ function createResultTexts () {
 		height: descriptionAreaHeight + "px",
 		opacity: 0
 	})
-	.append(description);
+	.append(nonogramData.message);
+	
 	$(".fadein").animate({
 		opacity: 1
 	}, 1000);
@@ -1015,4 +1016,8 @@ function disableUndo() {
 
 function preventDefault(event) {
 	event.preventDefault();
+}
+
+function parseNonogramData() {
+	nonogramData = $("#gameScreen").data().nonogram;
 }
