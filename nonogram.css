@@ -1,0 +1,167 @@
+body {
+	margin: 0px;
+}
+
+div#gameScreen {
+	background-image: url("images/green_dust_scratch.png");
+	font-family: serif;
+}
+
+div.numberCell {
+	position: absolute;
+	text-align: center;
+	color: rgb(50, 50, 50);
+}
+
+div.numberCell.odda {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.numberCell.evena {
+	background-color: rgba(230, 230, 230, 0.7);
+}
+
+div.inputCell {
+	position: absolute;
+	border-style: solid;
+	border-width: 1px;
+	border-top-color: rgb(200, 200, 200);
+	border-right-color: rgb(100, 100, 100);
+	border-bottom-color: rgb(50, 50, 50);
+	border-left-color: rgb(150, 150, 150);
+}
+
+div.resultCell {
+	border-style: none;
+}
+
+div.resultCell.left {
+	border-left-style: solid;
+	border-left-width: 1px;
+	border-left-color: rgb(150, 150, 150);
+}
+
+div.resultCell.top {
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-top-color: rgb(200, 200, 200);
+}
+
+div.resultCell.right {
+	border-right-style: solid;
+	border-right-width: 1px;
+	border-right-color: rgb(100, 100, 100);
+}
+
+div.resultCell.bottom {
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	border-bottom-color: rgb(50, 50, 50);
+}
+
+div.inputCell.white {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.inputCell.black {
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+div.inputCell.cross {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.selection {
+	background-color: rgba(255, 150, 50, 0.2);
+}
+
+div#selectedCol {
+	position: absolute;
+}
+
+div#selectedRow {
+	position: absolute;
+}
+
+div#selectedCell {
+	position: absolute;
+	z-index: 1000;
+	border-style: solid;
+	border-width: 2px;
+	border-color: rgb(255, 150, 50);
+}
+
+div.overlapCell {
+	position: absolute;
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(127, 127, 127);
+}
+
+div.overlapCell.white {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div.overlapCell.black {
+	background-color: rgba(127, 127, 127, 0.7);
+}
+
+div.overlapCell.cross {
+	background-color: rgba(255, 255, 255, 0.7);
+}
+
+div#upNumberArea {
+	position: absolute;
+}
+
+div#leftNumberArea {
+	position: absolute;
+}
+
+div#bottomArea {
+	position: absolute;
+}
+
+div#title {
+	position: absolute;
+	text-align: center;
+	font-size: 24px;
+}
+
+div#description {
+	position: absolute;
+	text-align: center;
+	font-size: 16px;
+}
+
+button {
+	margin: 5px;
+	border-top: 1px solid rgb(200, 200, 200);
+	border-right: 1px solid rgb(100, 100, 100);
+	border-bottom: 1px solid rgb(50, 50, 50);
+	border-left: 1px solid rgb(150, 150, 150);
+	width: 58px;
+	height: 58px;
+	text-align: center;
+	cursor: pointer;
+	color: rgb(50, 50, 50);
+	background-color: rgba(255, 255, 255, 0.7);
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	font-family: serif;
+	font-weight: bold;
+	font-size: 12px;
+	vertical-align: middle;
+}
+
+button#undoButton {
+	float: left;
+}
+
+button#menuButton {
+	float: right;
+}
+
+button:disabled {
+	opacity: 0.3;
+}
