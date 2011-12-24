@@ -35,8 +35,6 @@ if (usesMouseEvents) {
 	touchmove = "touchmove";
 	touchend = "touchend";
 }
-//mousemoveはボタンを押さなくても発生するので、ボタンを押しているかどうかの記録が必要
-var mouseIsDown = false;
 
 var Point = function(x, y) {
 	this.x = x;
@@ -68,112 +66,8 @@ const STATUS_WHITE = 0;
 const STATUS_BLACK = 1;
 const STATUS_CROSS = 2;
 
-const upNumberColCount = inputColCount;
-const upNumberRowCount = Math.ceil(inputRowCount / 2);
-const leftNumberColCount = Math.ceil(inputColCount / 2);
-const leftNumberRowCount = inputRowCount;
-
-const inputCellMaxWidth = Math.floor((nonogramAreaWidth - marginLeftOfInputArea) / (inputColCount + leftNumberColCount * numberCellSizeRatio));
-const inputCellMaxHeight = Math.floor((nonogramAreaHeight - marginTopOfInputArea) / (inputRowCount + upNumberRowCount * numberCellSizeRatio));
-const inputCellWidth = Math.min(inputCellMaxWidth, inputCellMaxHeight);
-const inputCellHeight = inputCellWidth;
-const inputAreaWidth = inputCellWidth * inputColCount;
-const inputAreaHeight = inputCellHeight * inputRowCount;
-
-const upNumberCellWidth = inputCellWidth;
-const upNumberCellHeight = Math.floor(inputCellHeight * numberCellSizeRatio);
-const leftNumberCellWidth = Math.floor(inputCellWidth * numberCellSizeRatio);
-const leftNumberCellHeight = inputCellHeight;
-
-const upNumberAreaWidth = upNumberCellWidth * upNumberColCount;
-const upNumberAreaHeight = upNumberCellHeight * upNumberRowCount;
-const leftNumberAreaWidth = leftNumberCellWidth * leftNumberColCount;
-const leftNumberAreaHeight = leftNumberCellHeight * leftNumberRowCount;
-
-const upNumberAreaStartY = marginTop + (nonogramAreaHeight - (inputAreaHeight + upNumberAreaHeight + marginTopOfInputArea)) / 2;
-const leftNumberAreaStartX = marginLeft + (nonogramAreaWidth - (inputAreaWidth + leftNumberAreaWidth + marginLeftOfInputArea)) / 2;
-const upNumberAreaStartX = leftNumberAreaStartX + leftNumberAreaWidth + marginLeftOfInputArea;
-const leftNumberAreaStartY = upNumberAreaStartY + upNumberAreaHeight + marginTopOfInputArea;
-
-const inputAreaStartX = upNumberAreaStartX;
-const inputAreaStartY = leftNumberAreaStartY;
-
-const shrinkedInputAreaWidth = inputAreaWidth + 2;
-const shrinkedInputAreaHeight = inputAreaHeight + 2;
-const shrinkedInputAreaStartX = marginLeft + Math.floor((nonogramAreaWidth - shrinkedInputAreaWidth) / 2);
-const shrinkedInputAreaStartY = Math.floor((screenHeight - shrinkedInputAreaHeight) / 2);
-
-const bottomAreaHeight = 70;
-const bottomAreaWidth = nonogramAreaWidth;
-const bottomAreaStartX = marginLeft;
-const bottomAreaStartY = screenHeight - (marginBottom + bottomAreaHeight);
-
-const mainScreenHeight = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
-
-const buttonAreaHeight = Math.floor(mainScreenHeight / 2);
-const buttonAreaWidth = screenWidth - marginLeft - marginRight;
-const buttonAreaStartX = marginLeft;
-const buttonAreaStartY = bottomAreaStartY + bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
-
-const titleAreaStartX = marginLeft;
-const titleAreaStartY = marginTop;
-const titleAreaWidth = nonogramAreaWidth;
-const titleAreaHeight = screenHeight / 10;
-
-const descriptionAreaStartX = marginLeft;
-const descriptionAreaStartY = titleAreaStartY + titleAreaHeight;
-const descriptionAreaWidth = titleAreaWidth;
-const descriptionAreaHeight = titleAreaHeight;
-
-const resultButtonAreaWidth = titleAreaWidth;
-const resultButtonAreaHeight = screenHeight / 5;
-const resultButtonAreaStartX = marginLeft;
-const resultButtonAreaStartY = screenHeight - (marginBottom + resultButtonAreaHeight);
-
-//const screenHeight = buttonAreaStartY + buttonAreaHeight + marginBottom;
-
-//入力ステータス
-var input = new Array(inputColCount);
-for (var col = 0; col < inputColCount; col++) {
-	input[col] = new Array(inputRowCount);
-	for (var row = 0; row < inputRowCount; row++) {
-		input[col][row] = 0;
-	}
-}
-//入力ヒストリー
-var inputHistoryCount = 0;
-var inputHistory = new Array();
-
-//正解チェック
-var upNumberColCorrectness = new Array(upNumberColCount);
-var leftNumberRowCorrectness = new Array(leftNumberRowCount);
-for (var col = 0; col < inputColCount; col++) {
-	checkCol(col);
-}
-for (var row = 0; row < inputRowCount; row++) {
-	checkRow(row);
-}
-checkColAndRowCorrectness();
-
-//プレイ中（操作可能）かどうか
-var isPlaying = true;
-
-//選択中のセル
-var selectedCell = new Cell(0, 0);
-
-const nonogramRect = new Rect(upNumberAreaStartY, inputAreaStartX + inputAreaWidth, inputAreaStartY + inputAreaHeight, leftNumberAreaStartX);
-
-var startPoint = null;
-var startCell = null;
-var startTime = null;
-var hasMoved = false;
-
-//連続入力モード
-var isContinuousInputMode = false;
-var continuousInputStartCell = null;
-var continuousInputColor = null;
-var continuousInputModeTimeout = null;
-
+var screenData = null;
+var gameData = null;
 var nonogramData = null;
 
 // ===============================================
@@ -181,11 +75,143 @@ var nonogramData = null;
 // ===============================================
 $(document).ready(function() {
 	setTimeout(doScroll, 100);
-	parseNonogramData();
+	initData();
 	initGameScreen();
 	initNonogram();
 	initBottomArea();
 });
+
+function initData() {
+	//最初にdata-nonogramタグからノノグラムデータ取得
+	initNonogramData();
+	//ノノグラムデータを元に画面デザイン用データを設定
+	initScreenData();
+	//画面デザイン用データを元にゲームデータを初期化
+	initGameData();
+}
+
+function initNonogramData() {
+	nonogramData = $("#gameScreen").data().nonogram;
+	nonogramData.verticalClue = JSON.parse(nonogramData.verticalClue);
+	nonogramData.horizontalClue = JSON.parse(nonogramData.horizontalClue);
+	return nonogramData;
+}
+
+function initScreenData() {
+	screenData = {};
+	screenData.inputColCount = nonogramData.width;
+	screenData.inputRowCount = nonogramData.height;
+	screenData.upNumberColCount = screenData.inputColCount;
+	screenData.upNumberRowCount = Math.ceil(screenData.inputRowCount / 2);
+	screenData.leftNumberColCount = Math.ceil(screenData.inputColCount / 2);
+	screenData.leftNumberRowCount = screenData.inputRowCount;
+
+	screenData.inputCellMaxWidth = Math.floor((nonogramAreaWidth - marginLeftOfInputArea) / (screenData.inputColCount + screenData.leftNumberColCount * numberCellSizeRatio));
+	screenData.inputCellMaxHeight = Math.floor((nonogramAreaHeight - marginTopOfInputArea) / (screenData.inputRowCount + screenData.upNumberRowCount * numberCellSizeRatio));
+	screenData.inputCellWidth = Math.min(screenData.inputCellMaxWidth, screenData.inputCellMaxHeight);
+	screenData.inputCellHeight = screenData.inputCellWidth;
+	screenData.inputAreaWidth = screenData.inputCellWidth * screenData.inputColCount;
+	screenData.inputAreaHeight = screenData.inputCellHeight * screenData.inputRowCount;
+
+	screenData.upNumberCellWidth = screenData.inputCellWidth;
+	screenData.upNumberCellHeight = Math.floor(screenData.inputCellHeight * numberCellSizeRatio);
+	screenData.leftNumberCellWidth = Math.floor(screenData.inputCellWidth * numberCellSizeRatio);
+	screenData.leftNumberCellHeight = screenData.inputCellHeight;
+
+	screenData.upNumberAreaWidth = screenData.upNumberCellWidth * screenData.upNumberColCount;
+	screenData.upNumberAreaHeight = screenData.upNumberCellHeight * screenData.upNumberRowCount;
+	screenData.leftNumberAreaWidth = screenData.leftNumberCellWidth * screenData.leftNumberColCount;
+	screenData.leftNumberAreaHeight = screenData.leftNumberCellHeight * screenData.leftNumberRowCount;
+
+	screenData.upNumberAreaStartY = marginTop + (nonogramAreaHeight - (screenData.inputAreaHeight + screenData.upNumberAreaHeight + marginTopOfInputArea)) / 2;
+	screenData.leftNumberAreaStartX = marginLeft + (nonogramAreaWidth - (screenData.inputAreaWidth + screenData.leftNumberAreaWidth + marginLeftOfInputArea)) / 2;
+	screenData.upNumberAreaStartX = screenData.leftNumberAreaStartX + screenData.leftNumberAreaWidth + marginLeftOfInputArea;
+	screenData.leftNumberAreaStartY = screenData.upNumberAreaStartY + screenData.upNumberAreaHeight + marginTopOfInputArea;
+
+	screenData.inputAreaStartX = screenData.upNumberAreaStartX;
+	screenData.inputAreaStartY = screenData.leftNumberAreaStartY;
+
+	screenData.shrinkedInputAreaWidth = screenData.inputAreaWidth + 2;
+	screenData.shrinkedInputAreaHeight = screenData.inputAreaHeight + 2;
+	screenData.shrinkedInputAreaStartX = marginLeft + Math.floor((nonogramAreaWidth - screenData.shrinkedInputAreaWidth) / 2);
+	screenData.shrinkedInputAreaStartY = Math.floor((screenHeight - screenData.shrinkedInputAreaHeight) / 2);
+
+	screenData.bottomAreaHeight = 70;
+	screenData.bottomAreaWidth = nonogramAreaWidth;
+	screenData.bottomAreaStartX = marginLeft;
+	screenData.bottomAreaStartY = screenHeight - (marginBottom + screenData.bottomAreaHeight);
+
+	screenData.mainScreenHeight = screenData.bottomAreaStartY + screenData.bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
+
+	screenData.buttonAreaHeight = Math.floor(screenData.mainScreenHeight / 2);
+	screenData.buttonAreaWidth = screenWidth - marginLeft - marginRight;
+	screenData.buttonAreaStartX = marginLeft;
+	screenData.buttonAreaStartY = screenData.bottomAreaStartY + screenData.bottomAreaHeight + marginBetweenBottomAreaAndButtonArea;
+
+	screenData.titleAreaStartX = marginLeft;
+	screenData.titleAreaStartY = marginTop;
+	screenData.titleAreaWidth = nonogramAreaWidth;
+	screenData.titleAreaHeight = screenHeight / 10;
+
+	screenData.descriptionAreaStartX = marginLeft;
+	screenData.descriptionAreaStartY = screenData.titleAreaStartY + screenData.titleAreaHeight;
+	screenData.descriptionAreaWidth = screenData.titleAreaWidth;
+	screenData.descriptionAreaHeight = screenData.titleAreaHeight;
+	
+	screenData.resultButtonAreaWidth = screenData.titleAreaWidth;
+	screenData.resultButtonAreaHeight = screenHeight / 5;
+	screenData.resultButtonAreaStartX = marginLeft;
+	screenData.resultButtonAreaStartY = screenHeight - (marginBottom + screenData.resultButtonAreaHeight);
+	
+	screenData.nonogramRect = new Rect(screenData.upNumberAreaStartY, screenData.inputAreaStartX + screenData.inputAreaWidth, screenData.inputAreaStartY + screenData.inputAreaHeight, screenData.leftNumberAreaStartX);
+}
+
+function initGameData() {
+	gameData = {};
+	gameData.input = new Array(screenData.inputColCount);
+	for (var col = 0; col < screenData.inputColCount; col++) {
+		gameData.input[col] = new Array(screenData.inputRowCount);
+		for (var row = 0; row < screenData.inputRowCount; row++) {
+			gameData.input[col][row] = 0;
+		}
+	}
+	
+	//入力ヒストリー
+	gameData.inputHistoryCount = 0;
+	gameData.inputHistory = new Array();
+	
+	//正解チェック
+	gameData.upNumberColCorrectness = new Array(screenData.upNumberColCount);
+	gameData.leftNumberRowCorrectness = new Array(screenData.leftNumberRowCount);
+	for (var col = 0; col < screenData.inputColCount; col++) {
+		checkCol(col);
+	}
+	for (var row = 0; row < screenData.inputRowCount; row++) {
+		checkRow(row);
+	}
+	checkColAndRowCorrectness();
+	
+	//プレイ中（操作可能）かどうか
+	gameData.isPlaying = true;
+	
+	//選択中のセル
+	gameData.selectedCell = new Cell(0, 0);
+	
+	//入力認識用データ
+	gameData.startPoint = null;
+	gameData.startCell = null;
+	gameData.startTime = null;
+	gameData.hasMoved = false;
+	
+	//連続入力モード
+	gameData.isContinuousInputMode = false;
+	gameData.continuousInputStartCell = null;
+	gameData.continuousInputColor = null;
+	gameData.continuousInputModeTimeout = null;
+	
+	//mousemoveはボタンを押さなくても発生するので、ボタンを押しているかどうかの記録が必要
+	gameData.mouseIsDown = false;
+}
 
 function initBottomArea() {
 	createBottomArea();
@@ -196,11 +222,11 @@ function initBottomArea() {
 function createBottomArea() {
 	$('<div id="bottomArea"></div>')
 	.appendTo("#gameScreen")
-	.css("top", bottomAreaStartY + "px")
-	.css("left", bottomAreaStartX + "px")
-	.css("width", bottomAreaWidth + "px")
-	.css("height", bottomAreaHeight + "px")
-	.css("line-height", bottomAreaHeight + "px");
+	.css("top", screenData.bottomAreaStartY + "px")
+	.css("left", screenData.bottomAreaStartX + "px")
+	.css("width", screenData.bottomAreaWidth + "px")
+	.css("height", screenData.bottomAreaHeight + "px")
+	.css("line-height", screenData.bottomAreaHeight + "px");
 }
 
 function createMenuButton() {
@@ -219,29 +245,29 @@ function createUndoButton() {
 }
 
 function backupInput() {
-	if (inputHistoryCount == inputHistoryMaxCount) {
-		inputHistory.shift();
+	if (gameData.inputHistoryCount == inputHistoryMaxCount) {
+		gameData.inputHistory.shift();
 	} else {
-		if (inputHistoryCount == 0) {
+		if (gameData.inputHistoryCount == 0) {
 			enableUndo();
 		}
-		inputHistoryCount++;
+		gameData.inputHistoryCount++;
 	}
-	var backup = new Array(inputColCount);
-	for (var col = 0; col < inputColCount; col++) {
-		backup[col] = new Array(inputRowCount);
-		for (var row = 0; row < inputRowCount; row++) {
-			backup[col][row] = input[col][row];
+	var backup = new Array(screenData.inputColCount);
+	for (var col = 0; col < screenData.inputColCount; col++) {
+		backup[col] = new Array(screenData.inputRowCount);
+		for (var row = 0; row < screenData.inputRowCount; row++) {
+			backup[col][row] = gameData.input[col][row];
 		}
 	}
-	inputHistory.push(backup);	
+	gameData.inputHistory.push(backup);	
 }
 
 function initGameScreen() {
 	$("#gameScreen")
 	.css("width", screenWidth + "px")
 	.css("height", screenHeight + "px")
-	.css("font-size", Math.floor(inputCellHeight * 0.6) + "px");
+	.css("font-size", Math.floor(screenData.inputCellHeight * 0.6) + "px");
 }
 
 function initNonogram() {
@@ -269,38 +295,34 @@ function createUpNumberArea() {
 	$('<div id="upNumberArea"></div>')
 	.appendTo("#nonogram")
 	.addClass("fadeout")
-	.css("left", upNumberAreaStartX + "px")
-	.css("top", upNumberAreaStartY + "px")
-	.css("width", upNumberAreaWidth + "px")
-	.css("height", upNumberAreaHeight + "px");
+	.css("left", screenData.upNumberAreaStartX + "px")
+	.css("top", screenData.upNumberAreaStartY + "px")
+	.css("width", screenData.upNumberAreaWidth + "px")
+	.css("height", screenData.upNumberAreaHeight + "px");
 }
 
 function createUpNumberCells() {
 	//上の数字セル
-	for (var col = 0; col < upNumberColCount; col++) {
-		for (var row = 0; row < upNumberRowCount; row++) {
+	for (var col = 0; col < screenData.upNumberColCount; col++) {
+		for (var row = 0; row < screenData.upNumberRowCount; row++) {
 			var id = getUpNumberCellId(col, row);
-			var x = col * upNumberCellWidth;
-			var y = row * upNumberCellHeight;
-			var content;
-			if (upNumber[col][row] == 0 && row != upNumberRowCount - 1) {
-				content = "";
-			} else {
-				content = upNumber[col][row];
-			}
+			var x = col * screenData.upNumberCellWidth;
+			var y = row * screenData.upNumberCellHeight;
 			$('<div id="' + id + '"></div>')
 			.appendTo("#upNumberArea")
 			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("width", upNumberCellWidth + "px")
-			.css("height", upNumberCellHeight + "px")
-			.css("line-height", upNumberCellHeight + "px")
-			.html(content);
+			.css("width", screenData.upNumberCellWidth + "px")
+			.css("height", screenData.upNumberCellHeight + "px")
+			.css("line-height", screenData.upNumberCellHeight + "px");
 			if (col % 2 == 0) {
 				$("#" + id).addClass("even");
 			} else {
 				$("#" + id).addClass("odd");
+			}
+			if (row >= screenData.upNumberRowCount - nonogramData.verticalClue[col].length) {
+				$("#" + id).html(nonogramData.verticalClue[col][screenData.upNumberRowCount - row - 1]);
 			}
 		}
 	}
@@ -310,38 +332,35 @@ function createLeftNumberArea() {
 	$('<div id="leftNumberArea"></div>')
 	.appendTo("#nonogram")
 	.addClass("fadeout")
-	.css("left", leftNumberAreaStartX + "px")
-	.css("top", leftNumberAreaStartY + "px")
-	.css("width", leftNumberAreaWidth + "px")
-	.css("height", leftNumberAreaHeight + "px");
+	.css("left", screenData.leftNumberAreaStartX + "px")
+	.css("top", screenData.leftNumberAreaStartY + "px")
+	.css("width", screenData.leftNumberAreaWidth + "px")
+	.css("height", screenData.leftNumberAreaHeight + "px");
 }
 
 function createLeftNumberCells() {
 	//左の数字セル
-	for (var col = 0; col < leftNumberColCount; col++) {
-		for (var row = 0; row < leftNumberRowCount; row++) {
+	for (var col = 0; col < screenData.leftNumberColCount; col++) {
+		for (var row = 0; row < screenData.leftNumberRowCount; row++) {
 			var id = getLeftNumberCellId(col, row);
-			var x = col * leftNumberCellWidth;
-			var y = row * leftNumberCellHeight;
+			var x = col * screenData.leftNumberCellWidth;
+			var y = row * screenData.leftNumberCellHeight;
 			var content;
-			if (leftNumber[col][row] == 0 && col != leftNumberColCount - 1) {
-				content = "";
-			} else {
-				content = leftNumber[col][row];
-			}
 			$('<div id="' + id + '"></div>')
 			.appendTo("#leftNumberArea")
 			.addClass("numberCell")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("width", leftNumberCellWidth + "px")
-			.css("height", leftNumberCellHeight + "px")
-			.css("line-height", leftNumberCellHeight + "px")
-			.html(content);
+			.css("width", screenData.leftNumberCellWidth + "px")
+			.css("height", screenData.leftNumberCellHeight + "px")
+			.css("line-height", screenData.leftNumberCellHeight + "px");
 			if (row % 2 == 0) {
 				$("#" + id).addClass("even");
 			} else {
 				$("#" + id).addClass("odd");
+			}
+			if (col >= screenData.leftNumberColCount - nonogramData.horizontalClue[row].length) {
+				$("#" + id).html(nonogramData.horizontalClue[row][screenData.leftNumberColCount - col - 1]);
 			}
 		}
 	}
@@ -352,18 +371,18 @@ function createInputArea() {
 	$("#nonogram").append('<div id="inputArea"></div>');
 	$("#inputArea")
 	.css("position", "absolute")
-	.css("left", inputAreaStartX + "px")
-	.css("top", inputAreaStartY + "px")
-	.css("width", inputAreaWidth + "px");
+	.css("left", screenData.inputAreaStartX + "px")
+	.css("top", screenData.inputAreaStartY + "px")
+	.css("width", screenData.inputAreaWidth + "px");
 }
 
 function createInputCells() {
 	//入力セル
-	for (var col = 0; col < inputColCount; col++) {
-		for (var row = 0; row < inputRowCount; row++) {
+	for (var col = 0; col < screenData.inputColCount; col++) {
+		for (var row = 0; row < screenData.inputRowCount; row++) {
 			var id = getInputCellId(col, row);
-			var x = col * inputCellWidth;
-			var y = row * inputCellHeight;
+			var x = col * screenData.inputCellWidth;
+			var y = row * screenData.inputCellHeight;
 			$('<div id="' + id + '"></div>')
 			.appendTo("#inputArea")
 			.addClass("inputCell")
@@ -371,8 +390,8 @@ function createInputCells() {
 			.css("position", "absolute")
 			.css("left", x + "px")
 			.css("top", y + "px")
-			.css("width", (inputCellWidth - 2) + "px")
-			.css("height", (inputCellHeight - 2) + "px");
+			.css("width", (screenData.inputCellWidth - 2) + "px")
+			.css("height", (screenData.inputCellHeight - 2) + "px");
 		}
 	}
 }
@@ -383,41 +402,41 @@ function createSelection() {
 	.appendTo("#nonogram")
 	.addClass("selection")
 	.addClass("fadeout")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", upNumberAreaStartY + "px")
-	.css("width", (inputCellWidth - 0) + "px")
-	.css("height", (nonogramRect.height - 0) + "px");
+	.css("left", (screenData.inputAreaStartX + gameData.selectedCell.col * screenData.inputCellWidth) + "px")
+	.css("top", screenData.upNumberAreaStartY + "px")
+	.css("width", (screenData.inputCellWidth - 0) + "px")
+	.css("height", (screenData.nonogramRect.height - 0) + "px");
 	//選択行
 	$('<div id="selectedRow"></div>')
 	.appendTo("#nonogram")
 	.addClass("selection")
 	.addClass("fadeout")
-	.css("left", leftNumberAreaStartX + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("width", (nonogramRect.width - 0) + "px")
-	.css("height", (inputCellHeight) + "px");
+	.css("left", screenData.leftNumberAreaStartX + "px")
+	.css("top", (screenData.inputAreaStartY + gameData.selectedCell.row * screenData.inputCellHeight) + "px")
+	.css("width", (screenData.nonogramRect.width - 0) + "px")
+	.css("height", (screenData.inputCellHeight) + "px");
 	//選択セル
 	$('<div id="selectedCell"></div>')
 	.appendTo("#nonogram")
 	.addClass("selection")
 	.addClass("fadeout")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px")
-	.css("width", (inputCellWidth - 4) + "px")
-	.css("height", (inputCellHeight - 4) + "px");
+	.css("left", (screenData.inputAreaStartX + gameData.selectedCell.col * screenData.inputCellWidth) + "px")
+	.css("top", (screenData.inputAreaStartY + gameData.selectedCell.row * screenData.inputCellHeight) + "px")
+	.css("width", (screenData.inputCellWidth - 4) + "px")
+	.css("height", (screenData.inputCellHeight - 4) + "px");
 }
 
 //restore previous input (undo)
 function restoreInput() {
-	if (inputHistoryCount > 0) {
-		var backup = inputHistory.pop();
-		for (var col = 0; col < inputColCount; col++) {
-			for (var row = 0; row < inputRowCount; row++) {
+	if (gameData.inputHistoryCount > 0) {
+		var backup = gameData.inputHistory.pop();
+		for (var col = 0; col < screenData.inputColCount; col++) {
+			for (var row = 0; row < screenData.inputRowCount; row++) {
 				setInputCellStatus(new Cell(col, row), backup[col][row]);
 			}
 		}
-		inputHistoryCount--;
-		if (inputHistoryCount == 0) {
+		gameData.inputHistoryCount--;
+		if (gameData.inputHistoryCount == 0) {
 			disableUndo();
 		}
 	} else {
@@ -426,7 +445,7 @@ function restoreInput() {
 }
 
 function gameScreen_touchstart(event) {
-	if (isPlaying) {}
+	if (gameData.isPlaying) {}
 	event.preventDefault();
 	var touchPoint = getTouchPoint(event);
 	//alert("x:" + touchPoint.x + " y:" + touchPoint.y + " scroll:" + document.body.scrollTop);
@@ -437,32 +456,32 @@ function gameScreen_touchstart(event) {
 		window.scrollTo(0, 999);
 	} else {
 		doScroll();
-		startPoint = getTouchPoint(event);
-		startCell = new Cell(selectedCell.col, selectedCell.row);
-		startTime = new Date().getTime();
-		hasMoved = false;
-		if (isContinuousInputMode) {
-			continuousInputModeTimeout = setTimeout(function () {
-				if (startPoint != null && !hasMoved) {
+		gameData.startPoint = getTouchPoint(event);
+		gameData.startCell = new Cell(gameData.selectedCell.col, gameData.selectedCell.row);
+		gameData.startTime = new Date().getTime();
+		gameData.hasMoved = false;
+		if (gameData.isContinuousInputMode) {
+			gameData.continuousInputModeTimeout = setTimeout(function () {
+				if (gameData.startPoint != null && !gameData.hasMoved) {
 					deleteOverlapCells();
-					isContinuousInputMode = false;
-					continuousInputStartCell = null;
-					continuousInputColor = null;
+					gameData.isContinuousInputMode = false;
+					gameData.continuousInputStartCell = null;
+					gameData.continuousInputColor = null;
 				}
 			}, continuousInputModeTime);
 		} else {
-			continuousInputModeTimeout = setTimeout(function () {
-				if (startPoint != null && !hasMoved) {
-					isContinuousInputMode = true;
-					continuousInputStartCell = new Cell(selectedCell.col, selectedCell.row);
-					continuousInputColor = input[selectedCell.col][selectedCell.row];
+			gameData.continuousInputModeTimeout = setTimeout(function () {
+				if (gameData.startPoint != null && !gameData.hasMoved) {
+					gameData.isContinuousInputMode = true;
+					gameData.continuousInputStartCell = new Cell(gameData.selectedCell.col, gameData.selectedCell.row);
+					gameData.continuousInputColor = gameData.input[gameData.selectedCell.col][gameData.selectedCell.row];
 					deg = 0;
 					updateOverlapCells();
 				}
 			}, continuousInputModeTime);
 		}
 		if (usesMouseEvents) {
-			mouseIsDown = true;
+			gameData.mouseIsDown = true;
 		}
 	}
 }
@@ -471,63 +490,62 @@ function gameScreen_touchend(event) {
 	event.preventDefault();
 	//$("#timer").html(event.originalEvent.touches.length);
 	if (usesMouseEvents) {
-		mouseIsDown = false;
+		gameData.mouseIsDown = false;
 	}
 	var currentTime = new Date().getTime();
-	clearTimeout(continuousInputModeTimeout);
-	if (!hasMoved) {
-		if (currentTime - startTime < continuousInputModeTime) {
+	clearTimeout(gameData.continuousInputModeTimeout);
+	if (!gameData.hasMoved) {
+		if (currentTime - gameData.startTime < continuousInputModeTime) {
 			backupInput();
-			if (isContinuousInputMode) {
-				var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
-				var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
-				var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
-				var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+			if (gameData.isContinuousInputMode) {
+				var fromCol = Math.min(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+				var toCol = Math.max(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+				var fromRow = Math.min(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
+				var toRow = Math.max(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
 				for (var col = fromCol; col <= toCol; col++) {
 					for (var row = fromRow; row <= toRow; row++) {
-						setInputCellColor(col, row, continuousInputColor);
+						setInputCellColor(col, row, gameData.continuousInputColor);
 					}
 				}
 				deleteOverlapCells();
-				isContinuousInputMode = false;
-				continuousInputStartCell = null;
-				continuousInputColor = null;
+				gameData.isContinuousInputMode = false;
+				gameData.continuousInputStartCell = null;
+				gameData.continuousInputColor = null;
 			} else {
 				changeSelectedCellColor();
 			}
 		}
 	}
-	hasMoved = false;
-	startPoint = null;
-	startCell = null;
-	startTime = null;
+	gameData.hasMoved = false;
+	gameData.startPoint = null;
+	gameData.startCell = null;
+	gameData.startTime = null;
 }
 
 function changeSelectedCellColor() {
-	setInputCellStatus(selectedCell, getNextInputColor(input[selectedCell.col][selectedCell.row]));
+	setInputCellStatus(gameData.selectedCell, getNextInputColor(gameData.input[gameData.selectedCell.col][gameData.selectedCell.row]));
 }
 
 function updateSelection(newCell) {
 	//選択範囲
 	$("#selectedCol")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", upNumberAreaStartY + "px");
+	.css("left", (screenData.inputAreaStartX + gameData.selectedCell.col * screenData.inputCellWidth) + "px")
+	.css("top", screenData.upNumberAreaStartY + "px");
 	
 	$("#selectedRow")
-	.css("left", leftNumberAreaStartX + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px");
+	.css("left", screenData.leftNumberAreaStartX + "px")
+	.css("top", (screenData.inputAreaStartY + gameData.selectedCell.row * screenData.inputCellHeight) + "px");
 	
 	$("#selectedCell")
-	.css("left", (inputAreaStartX + selectedCell.col * inputCellWidth) + "px")
-	.css("top", (inputAreaStartY + selectedCell.row * inputCellHeight) + "px");
-	
+	.css("left", (screenData.inputAreaStartX + gameData.selectedCell.col * screenData.inputCellWidth) + "px")
+	.css("top", (screenData.inputAreaStartY + gameData.selectedCell.row * screenData.inputCellHeight) + "px");
 }
 
 function deleteOverlapCells() {
-	var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
-	var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
-	var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
-	var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
+	var fromCol = Math.min(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+	var toCol = Math.max(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+	var fromRow = Math.min(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
+	var toRow = Math.max(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
 	for (var col = fromCol; col <= toCol; col++) {
 		for (var row = fromRow; row <= toRow; row++) {
 			$("#" + getOverlapCellId(col, row)).remove();
@@ -536,16 +554,16 @@ function deleteOverlapCells() {
 }
 
 function updateOverlapCells() {
-	if (isContinuousInputMode) {
-		var fromCol = Math.min(continuousInputStartCell.col, selectedCell.col);
-		var toCol = Math.max(continuousInputStartCell.col, selectedCell.col);
-		var fromRow = Math.min(continuousInputStartCell.row, selectedCell.row);
-		var toRow = Math.max(continuousInputStartCell.row, selectedCell.row);
-		for (var col = 0; col < inputColCount; col++) {
-			for (var row = 0; row < inputRowCount; row++) {
+	if (gameData.isContinuousInputMode) {
+		var fromCol = Math.min(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+		var toCol = Math.max(gameData.continuousInputStartCell.col, gameData.selectedCell.col);
+		var fromRow = Math.min(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
+		var toRow = Math.max(gameData.continuousInputStartCell.row, gameData.selectedCell.row);
+		for (var col = 0; col < screenData.inputColCount; col++) {
+			for (var row = 0; row < screenData.inputRowCount; row++) {
 				if (col >= fromCol && col <= toCol && row >= fromRow && row <= toRow) {
 					if ($("#" + getOverlapCellId(col, row)).size() == 0) {
-						createOverlapCell(col, row, continuousInputColor);
+						createOverlapCell(col, row, gameData.continuousInputColor);
 					}
 				} else {
 					if ($("#" + getOverlapCellId(col, row)).size() > 0) {
@@ -571,10 +589,10 @@ function createOverlapCell(col, row, color) {
 	$('<div id="' + id + '"></div>')
 	.appendTo("#nonogram")
 	.addClass("overlapCell")
-	.css("left", (inputAreaStartX + col * inputCellWidth + 3) + "px")
-	.css("top", (inputAreaStartY + row * inputCellHeight + 3) + "px")
-	.css("width", (inputCellWidth - 8) + "px")
-	.css("height", (inputCellHeight - 8) + "px");
+	.css("left", (screenData.inputAreaStartX + col * screenData.inputCellWidth + 3) + "px")
+	.css("top", (screenData.inputAreaStartY + row * screenData.inputCellHeight + 3) + "px")
+	.css("width", (screenData.inputCellWidth - 8) + "px")
+	.css("height", (screenData.inputCellHeight - 8) + "px");
 	switch (color) {
 	case STATUS_WHITE:
 		$("#" + id).addClass("white");
@@ -585,7 +603,7 @@ function createOverlapCell(col, row, color) {
 	case STATUS_CROSS:
 		$("#" + id).addClass("cross");
 		var canvasId = createOverlapCellCanvasId(new Cell(col, row));
-		$("#" + id).append('<canvas id="' + canvasId + '" width="' + (inputCellWidth - 7) + '" height="' + (inputCellHeight - 7) + '"></canvas>');
+		$("#" + id).append('<canvas id="' + canvasId + '" width="' + (screenData.inputCellWidth - 7) + '" height="' + (screenData.inputCellHeight - 7) + '"></canvas>');
 		var canvas = $("#" + canvasId).get(0);
 		//Canvas要素の対応チェック
 		if (canvas && canvas.getContext) {
@@ -594,9 +612,9 @@ function createOverlapCell(col, row, color) {
 			ctx.strokeStyle = "rgba(127, 127, 127, 0.8)";
 			ctx.beginPath();
 			ctx.moveTo(0, 0);
-			ctx.lineTo(inputCellWidth - 8, inputCellHeight - 8);
-			ctx.moveTo(0, inputCellHeight - 8);
-			ctx.lineTo(inputCellWidth - 8, 0);
+			ctx.lineTo(screenData.inputCellWidth - 8, screenData.inputCellHeight - 8);
+			ctx.moveTo(0, screenData.inputCellHeight - 8);
+			ctx.lineTo(screenData.inputCellWidth - 8, 0);
 			ctx.closePath();
 			ctx.stroke();
 		}
@@ -606,14 +624,14 @@ function createOverlapCell(col, row, color) {
 
 // 入力セルがタッチされたとき
 function inputCell_touchstart(event) {
-	if (isPlaying) {
+	if (gameData.isPlaying) {
 		if (usesMouseEvents) {
-			mouseIsDown = true;
+			gameData.mouseIsDown = true;
 		}
 		event.preventDefault();
 		var col = event.data.col;
 		var row = event.data.row;
-		switch (input[col][row]) {
+		switch (gameData.input[col][row]) {
 		case 0:
 			black(col, row);
 			break;
@@ -641,10 +659,10 @@ function clip(n, min, max) {
 // タッチ後に動かしたとき
 function gameScreen_touchmove(event) {
 	event.preventDefault();
-	if (!usesMouseEvents || mouseIsDown) {
+	if (!usesMouseEvents || gameData.mouseIsDown) {
 		var currentPoint = getTouchPoint(event);
-		var xChange = currentPoint.x - startPoint.x;
-		var yChange = currentPoint.y - startPoint.y;
+		var xChange = currentPoint.x - gameData.startPoint.x;
+		var yChange = currentPoint.y - gameData.startPoint.y;
 		if (Math.abs(xChange) > Math.abs(yChange) * 3) {
 			yChange = 0;
 		} else if (Math.abs(yChange) > Math.abs(xChange) * 3) {
@@ -653,12 +671,12 @@ function gameScreen_touchmove(event) {
 		var colChange = Math.floor(xChange / 30);
 		var rowChange = Math.floor(yChange / 30);
 		if (colChange != 0 || rowChange != 0) {
-			hasMoved = true;
+			gameData.hasMoved = true;
 		}
-		var oldSelectedCell = new Cell(selectedCell.col, selectedCell.row);
-		selectedCell.col = clip(startCell.col + colChange, 0, upNumberColCount - 1);
-		selectedCell.row = clip(startCell.row + rowChange, 0, leftNumberRowCount - 1);
-		if (oldSelectedCell.col != selectedCell.col || oldSelectedCell.row != selectedCell.row) {
+		var oldSelectedCell = new Cell(gameData.selectedCell.col, gameData.selectedCell.row);
+		gameData.selectedCell.col = clip(gameData.startCell.col + colChange, 0, screenData.upNumberColCount - 1);
+		gameData.selectedCell.row = clip(gameData.startCell.row + rowChange, 0, screenData.leftNumberRowCount - 1);
+		if (oldSelectedCell.col != gameData.selectedCell.col || oldSelectedCell.row != gameData.selectedCell.row) {
 			updateSelection();
 			updateOverlapCells();
 		}
@@ -693,7 +711,7 @@ function createInputCellCanvasId(cell) {
 }
 
 function setInputCellStatus(cell, status) {
-	var oldStatus = input[cell.col][cell.row];
+	var oldStatus = gameData.input[cell.col][cell.row];
 	console.log("oldStatus:" + oldStatus + " newStatus:" + status);
 	var id = getInputCellId(cell.col, cell.row);
 	if (oldStatus != status) {
@@ -721,7 +739,7 @@ function setInputCellStatus(cell, status) {
 			$("#" + id).addClass("cross");
 			//canvas要素でxを書く
 			var canvasId = createInputCellCanvasId(cell);
-			$("#" + id).append('<canvas id="' + canvasId + '" width="' + inputCellWidth + '" height="' + inputCellHeight + '"></canvas>');
+			$("#" + id).append('<canvas id="' + canvasId + '" width="' + screenData.inputCellWidth + '" height="' + screenData.inputCellHeight + '"></canvas>');
 			$("#" + canvasId).addClass("fadeout");
 			var canvas = $("#" + canvasId).get(0);
 			//Canvas要素の対応チェック
@@ -731,15 +749,15 @@ function setInputCellStatus(cell, status) {
 				ctx.strokeStyle = "rgba(0, 0, 0)";
 				ctx.beginPath();
 				ctx.moveTo(3, 3);
-				ctx.lineTo(inputCellWidth - 5, inputCellHeight - 5);
-				ctx.moveTo(3, inputCellHeight - 5);
-				ctx.lineTo(inputCellWidth - 5, 3);
+				ctx.lineTo(screenData.inputCellWidth - 5, screenData.inputCellHeight - 5);
+				ctx.moveTo(3, screenData.inputCellHeight - 5);
+				ctx.lineTo(screenData.inputCellWidth - 5, 3);
 				ctx.closePath();
 				ctx.stroke();
 			}
 			break;
 		}
-		input[cell.col][cell.row] = status;
+		gameData.input[cell.col][cell.row] = status;
 		checkColAndRow(cell.col, cell.row);
 	}
 }
@@ -762,27 +780,43 @@ function getLeftNumberCellId(col, row) {
 
 //列の正しさチェック
 function checkCol(col) {
-	var inputColChunk = new Array(upNumberRowCount);
-	for (var inputColChunkNumber = 0; inputColChunkNumber < upNumberRowCount; inputColChunkNumber++) {
-		inputColChunk[inputColChunkNumber] = 0;
-	}
-	for (var row = 0, inputColChunkNumber = 0; row < inputRowCount; row++) {
-		if (input[col][row] == 1) {
-			inputColChunk[inputColChunkNumber]++;
-		} else if (inputColChunk[inputColChunkNumber] > 0) {
-			inputColChunkNumber++;
+	var inputColChunks = [];
+	var isInChunk = false;
+	for (var row = 0, inputColChunkNumber = 0; row < screenData.inputRowCount; row++) {
+		if (gameData.input[col][row] == 1) {
+			if (!isInChunk) {
+				isInChunk = true;
+				inputColChunks.push(1);
+			} else {
+				inputColChunks[inputColChunks.length - 1]++;
+			}
+		} else if (isInChunk) {
+			isInChunk = false;
 		}
 	}
-	upNumberColCorrectness[col] = false;
-	var upNumberRow = 0;
-	var inputColChunkNumber = 0
-	while (upNumberRow < upNumberRowCount - 1 && upNumber[col][upNumberRow] == 0) {
-		upNumberRow++;
+	if (inputColChunks.length == 0) {
+		inputColChunks.push(0);
 	}
+	var lastCorrectness = gameData.upNumberColCorrectness[col];
+	if (inputColChunks.length == nonogramData.verticalClue[col].length) {
+		gameData.upNumberColCorrectness[col] = true;
+		for (var i = 0; i < nonogramData.verticalClue[col].length; i++) {
+			if (inputColChunks[i] != nonogramData.verticalClue[col][i]) {
+				gameData.upNumberColCorrectness[col] = false;
+				break;
+			}
+		}
+	} else {
+		gameData.upNumberColCorrectness[col] = false;
+	}
+	if (!lastCorrectness && gameData.upNumberColCorrectness[col]) {
+		checkColAndRowCorrectness();
+	}
+	/*
 	while (upNumber[col][upNumberRow] == inputColChunk[inputColChunkNumber]) {
-		if (upNumberRow == upNumberRowCount - 1) {
-			if (inputColChunkNumber == upNumberRowCount - 1 || inputColChunk[inputColChunkNumber + 1] == 0) {
-				upNumberColCorrectness[col] = true;
+		if (upNumberRow == screenData.upNumberRowCount - 1) {
+			if (inputColChunkNumber == screenData.upNumberRowCount - 1 || inputColChunk[inputColChunkNumber + 1] == 0) {
+				gameData.upNumberColCorrectness[col] = true;
 				checkColAndRowCorrectness();
 			}
 			break;
@@ -791,31 +825,33 @@ function checkCol(col) {
 			inputColChunkNumber++;
 		}
 	}
+	*/
 }
 
 //行の正しさチェック
 function checkRow(row) {
-	var inputRowChunk = new Array(leftNumberColCount);
-	for (var inputRowChunkNumber = 0; inputRowChunkNumber < leftNumberColCount; inputRowChunkNumber++) {
+	/*
+	var inputRowChunk = new Array(screenData.leftNumberColCount);
+	for (var inputRowChunkNumber = 0; inputRowChunkNumber < screenData.leftNumberColCount; inputRowChunkNumber++) {
 		inputRowChunk[inputRowChunkNumber] = 0;
 	}
-	for (var col = 0, inputRowChunkNumber = 0; col < inputColCount; col++) {
-		if (input[col][row] == 1) {
+	for (var col = 0, inputRowChunkNumber = 0; col < screenData.inputColCount; col++) {
+		if (gameData.input[col][row] == 1) {
 			inputRowChunk[inputRowChunkNumber]++;
 		} else if (inputRowChunk[inputRowChunkNumber] > 0) {
 			inputRowChunkNumber++;
 		}
 	}
-	leftNumberRowCorrectness[row] = false;
+	gameData.leftNumberRowCorrectness[row] = false;
 	var leftNumberCol = 0;
 	var inputRowChunkNumber = 0
-	while (leftNumberCol < leftNumberColCount - 1 && leftNumber[leftNumberCol][row] == 0) {
+	while (leftNumberCol < screenData.leftNumberColCount - 1 && leftNumber[leftNumberCol][row] == 0) {
 		leftNumberCol++;
 	}
 	while (leftNumber[leftNumberCol][row] == inputRowChunk[inputRowChunkNumber]) {
-		if (leftNumberCol == leftNumberColCount - 1) {
-			if (inputRowChunkNumber == leftNumberColCount - 1 || inputRowChunk[inputRowChunkNumber + 1] == 0) {
-				leftNumberRowCorrectness[row] = true;
+		if (leftNumberCol == screenData.leftNumberColCount - 1) {
+			if (inputRowChunkNumber == screenData.leftNumberColCount - 1 || inputRowChunk[inputRowChunkNumber + 1] == 0) {
+				gameData.leftNumberRowCorrectness[row] = true;
 				checkColAndRowCorrectness();
 			}
 			break;
@@ -823,6 +859,39 @@ function checkRow(row) {
 			leftNumberCol++;
 			inputRowChunkNumber++;
 		}
+	}
+	*/
+	var inputRowChunks = [];
+	var isInChunk = false;
+	for (var col = 0, inputRowChunkNumber = 0; col < screenData.inputColCount; col++) {
+		if (gameData.input[col][row] == 1) {
+			if (!isInChunk) {
+				isInChunk = true;
+				inputRowChunks.push(1);
+			} else {
+				inputRowChunks[inputRowChunks.length - 1]++;
+			}
+		} else if (isInChunk) {
+			isInChunk = false;
+		}
+	}
+	if (inputRowChunks.length == 0) {
+		inputRowChunks.push(0);
+	}
+	var lastCorrectness = gameData.leftNumberRowCorrectness[row];
+	if (inputRowChunks.length == nonogramData.horizontalClue[row].length) {
+		gameData.leftNumberRowCorrectness[row] = true;
+		for (var i = 0; i < nonogramData.horizontalClue[row].length; i++) {
+			if (inputRowChunks[i] != nonogramData.horizontalClue[row][i]) {
+				gameData.leftNumberRowCorrectness[row] = false;
+				break;
+			}
+		}
+	} else {
+		gameData.leftNumberRowCorrectness[row] = false;
+	}
+	if (!lastCorrectness && gameData.leftNumberRowCorrectness[row]) {
+		checkColAndRowCorrectness();
 	}
 }
 
@@ -834,13 +903,13 @@ function checkColAndRow(col, row) {
 
 //すべての列と行について正しいとされているかチェック
 function checkColAndRowCorrectness() {
-	for (var col = 0; col < inputColCount; col++) {
-		if (!upNumberColCorrectness[col]) {
+	for (var col = 0; col < screenData.inputColCount; col++) {
+		if (!gameData.upNumberColCorrectness[col]) {
 			return;
 		}
 	}
-	for (var row = 0; row < inputRowCount; row++) {
-		if (!leftNumberRowCorrectness[row]) {
+	for (var row = 0; row < screenData.inputRowCount; row++) {
+		if (!gameData.leftNumberRowCorrectness[row]) {
 			return;
 		}
 	}
@@ -851,7 +920,7 @@ var currentframe = 0;
 
 //クリア画面を表示
 function clear() {
-	isPlaying = false;
+	gameData.isPlaying = false;
 	$("#nonogram")
 	.unbind(touchstart, gameScreen_touchstart)
 	.unbind(touchmove, gameScreen_touchmove)
@@ -859,15 +928,15 @@ function clear() {
 	$("#undoButton").unbind(touchstart, undoButton_touchstart);
 	var rand = null;
 	var frameNum = null;
-	if (inputColCount < inputRowCount) {
+	if (screenData.inputColCount < screenData.inputRowCount) {
 		rand = 0;
-		frameNum = inputRowCount;
-	} else if (inputColCount > inputRowCount) {
+		frameNum = screenData.inputRowCount;
+	} else if (screenData.inputColCount > screenData.inputRowCount) {
 		rand = 1;
-		frameNum = inputColCount;
+		frameNum = screenData.inputColCount;
 	} else {
 		rand = 2;
-		frameNum = Math.max(inputColCount, inputRowCount);
+		frameNum = screenData.inputColCount + screenData.inputRowCount - 1;
 	}
 	$(".fadeout").animate({opacity: 0.0}, 1000, "linear", function() {
 		$(this).remove();
@@ -876,23 +945,23 @@ function clear() {
 		animateWithFrame(frameNum, 100, function (frame) {
 			if (rand == 0) {
 				var row = frame;
-				for (var col = 0; col < inputColCount; col++) {
+				for (var col = 0; col < screenData.inputColCount; col++) {
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			} else if (rand == 1) {
 				var col = frame;
-				for (var row = 0; row < inputRowCount; row++) {
+				for (var row = 0; row < screenData.inputRowCount; row++) {
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			} else if (rand == 2) {
 				var offset = frame;
-				for (var col = Math.max(0, offset - inputColCount + 1); col <= Math.min(inputColCount - 1, offset); col++) {
+				for (var col = Math.max(0, offset - screenData.inputColCount + 1); col <= Math.min(screenData.inputColCount - 1, offset); col++) {
 					var row = offset - col;
 					convertInputCellToResultCell(new Cell(col, row));
 				}
 			}
 		}, function() {
-			$("#inputArea").animate({left: shrinkedInputAreaStartX, top: shrinkedInputAreaStartY}, 1000, "linear", function () {
+			$("#inputArea").animate({left: screenData.shrinkedInputAreaStartX, top: screenData.shrinkedInputAreaStartY}, 1000, "linear", function () {
 				createResultTexts();
 				createResultButtons();
 			});
@@ -905,11 +974,11 @@ function createResultTexts () {
 	.appendTo("#nonogram")
 	.addClass("fadein")
 	.css({
-		left: titleAreaStartX,
-		top: titleAreaStartY,
-		width: titleAreaWidth + "px",
-		height: titleAreaHeight + "px",
-		lineHeight: titleAreaHeight + "px",
+		left: screenData.titleAreaStartX,
+		top: screenData.titleAreaStartY,
+		width: screenData.titleAreaWidth + "px",
+		height: screenData.titleAreaHeight + "px",
+		lineHeight: screenData.titleAreaHeight + "px",
 		opacity: 0
 	})
 	.append(nonogramData.title);
@@ -918,10 +987,10 @@ function createResultTexts () {
 	.appendTo("#nonogram")
 	.addClass("fadein")
 	.css({
-		left: descriptionAreaStartX,
-		top: descriptionAreaStartY,
-		width: descriptionAreaWidth + "px",
-		height: descriptionAreaHeight + "px",
+		left: screenData.descriptionAreaStartX,
+		top: screenData.descriptionAreaStartY,
+		width: screenData.descriptionAreaWidth + "px",
+		height: screenData.descriptionAreaHeight + "px",
 		opacity: 0
 	})
 	.append(nonogramData.message);
@@ -966,14 +1035,14 @@ function convertInputCellToResultCell(cell) {
 	obj = $("#" + getInputCellId(cell.col, cell.row))
 	obj
 	.addClass("resultCell")
-	.css("width", inputCellWidth + "px")
-	.css("height", inputCellHeight + "px");
+	.css("width", screenData.inputCellWidth + "px")
+	.css("height", screenData.inputCellHeight + "px");
 	if (cell.col == 0) {
 		obj
 		.addClass("left")
 		.css("left", addPx(obj.css("left"), -1));
 	}
-	if (cell.col == inputColCount - 1) {
+	if (cell.col == screenData.inputColCount - 1) {
 		obj.addClass("right");
 	}
 	if (cell.row == 0) {
@@ -981,7 +1050,7 @@ function convertInputCellToResultCell(cell) {
 		.addClass("top")
 		.css("top", addPx(obj.css("top"), -1));
 	}
-	if (cell.row == inputRowCount - 1) {
+	if (cell.row == screenData.inputRowCount - 1) {
 		obj.addClass("bottom");
 	}
 }
@@ -1016,8 +1085,4 @@ function disableUndo() {
 
 function preventDefault(event) {
 	event.preventDefault();
-}
-
-function parseNonogramData() {
-	nonogramData = $("#gameScreen").data().nonogram;
 }
