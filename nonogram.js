@@ -304,6 +304,7 @@ function createUpNumberArea() {
 function createUpNumberCells() {
 	//上の数字セル
 	for (var col = 0; col < screenData.upNumberColCount; col++) {
+		var numbers = nondestructiveArrayReverse(nonogramData.verticalClue[col]);
 		for (var row = 0; row < screenData.upNumberRowCount; row++) {
 			var id = getUpNumberCellId(col, row);
 			var x = col * screenData.upNumberCellWidth;
@@ -321,8 +322,8 @@ function createUpNumberCells() {
 			} else {
 				$("#" + id).addClass("odd");
 			}
-			if (row >= screenData.upNumberRowCount - nonogramData.verticalClue[col].length) {
-				$("#" + id).html(nonogramData.verticalClue[col][screenData.upNumberRowCount - row - 1]);
+			if (row >= screenData.upNumberRowCount - numbers.length) {
+				$("#" + id).html(numbers[screenData.upNumberRowCount - row - 1]);
 			}
 		}
 	}
@@ -340,8 +341,9 @@ function createLeftNumberArea() {
 
 function createLeftNumberCells() {
 	//左の数字セル
-	for (var col = 0; col < screenData.leftNumberColCount; col++) {
-		for (var row = 0; row < screenData.leftNumberRowCount; row++) {
+	for (var row = 0; row < screenData.leftNumberRowCount; row++) {
+		var numbers = nondestructiveArrayReverse(nonogramData.horizontalClue[row]);
+		for (var col = 0; col < screenData.leftNumberColCount; col++) {
 			var id = getLeftNumberCellId(col, row);
 			var x = col * screenData.leftNumberCellWidth;
 			var y = row * screenData.leftNumberCellHeight;
@@ -359,8 +361,8 @@ function createLeftNumberCells() {
 			} else {
 				$("#" + id).addClass("odd");
 			}
-			if (col >= screenData.leftNumberColCount - nonogramData.horizontalClue[row].length) {
-				$("#" + id).html(nonogramData.horizontalClue[row][screenData.leftNumberColCount - col - 1]);
+			if (col >= screenData.leftNumberColCount - numbers.length) {
+				$("#" + id).html(numbers[screenData.leftNumberColCount - col - 1]);
 			}
 		}
 	}
@@ -878,6 +880,7 @@ function checkRow(row) {
 	if (inputRowChunks.length == 0) {
 		inputRowChunks.push(0);
 	}
+	//alert(inputRowChunks + " " + nonogramData.horizontalClue[row]);
 	var lastCorrectness = gameData.leftNumberRowCorrectness[row];
 	if (inputRowChunks.length == nonogramData.horizontalClue[row].length) {
 		gameData.leftNumberRowCorrectness[row] = true;
@@ -1085,4 +1088,12 @@ function disableUndo() {
 
 function preventDefault(event) {
 	event.preventDefault();
+}
+
+function nondestructiveArrayReverse(array) {
+	var result = new Array(array.length);
+	for (var i = 0; i < array.length; i++) {
+		result[i] = array[array.length - 1 - i];
+	}
+	return result;
 }
