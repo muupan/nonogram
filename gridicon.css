@@ -1,0 +1,16 @@
+.squareIconGrid .ui-btn-inner {
+	padding: 0px;
+	width: 57px;
+	height: 57px;
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.squareIconGrid {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.squareIconGrid div {
+	text-align: center;
+}
